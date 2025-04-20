@@ -30,6 +30,7 @@ public class Main {
             // REPL mode
             System.out.println("Intense REPL (type 'exit' to quit)");
             BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+            Environment environment = new Environment();
             while (true) {
                 System.out.print("> ");
                 try {
@@ -42,7 +43,6 @@ public class Main {
                     Lexer lexer = new Lexer(input);
                     Parser parser = new Parser(lexer);
                     List<ASTNode> astNodes = parser.getParseTree();
-                    Environment environment = new Environment();
                     Interpreter interpreter = new Interpreter(environment);
                     interpreter.run(astNodes);
                     long endTime = System.nanoTime();

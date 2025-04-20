@@ -6,6 +6,7 @@ import java.util.Optional;
 
 public class Environment {
     private final Map<String, Object> vars = new ConcurrentHashMap<>();
+    private final Map<String, Closure> closures = new ConcurrentHashMap<>();
     private final Environment parent;
 
     public Environment() {
@@ -19,16 +20,18 @@ public class Environment {
     public void define(String name, Object value) {
         vars.put(name, value);
     }
+    public void defineClosure(String name,Closure value) {
+        closures.put(name, value);
+    }
 
-    public Optional<Closure> get(String name) {
-        Object value = vars.get(name);
-        if (value instanceof Closure closure) {
-            return Optional.of(closure);
-        }
-        if (parent != null) {
+    public Closure get(String name) {
+        Closure value = closures.get(name);
+        if (value != null) {
+            return value;
+        } else if (parent != null) {
             return parent.get(name);
         }
-        return Optional.empty();
+        return null;
     }
 
     public Optional<Object> lookup(String name) {

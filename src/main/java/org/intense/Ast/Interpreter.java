@@ -15,23 +15,20 @@ public class Interpreter {
         this.environment = environment;
     }
 
-
-
-
     public void run(List<ASTNode> astNodes) throws ExecutionException, InterruptedException {
         ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
-        List<Future<Result<Object>>> results = new ArrayList<>();
+        List<Future<Object>> results = new ArrayList<>();
         for (ASTNode node : astNodes) {
-            results.add(executor.submit(() -> node.eval(environment)));
+            results.add(executor.submit(node::eval));
         }
 
-        for (Future<Result<Object>> future : results) {
-            Result<Object> result = future.get();  // safely unwrap
-            if (result.isSuccess()) {
-                System.out.println("Result: " + result.value());
+        for (Future<Object> future : results) {
+            Object result = future.get();  // safely unwrap
+            if (result != null) {
+                System.out.println(result);
             } else {
-                System.err.println("Error: " + result.error().getMessage());
+                System.err.println("Error: Ups :) time to rethink the logic");
             }
         }
         executor.shutdown();

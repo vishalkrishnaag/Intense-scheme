@@ -1,6 +1,5 @@
 package org.intense.Ast;
 
-import org.intense.Environment;
 import org.intense.TokenType;
 
 public class AtomNode extends ASTNode {
@@ -20,14 +19,14 @@ public class AtomNode extends ASTNode {
     }
 
     @Override
-    public Result<Object> eval(Environment environment){
+    public Object eval(){
         if (type == TokenType.SYMBOL) {
-            return Result.ok(environment.lookup(value));
+            return value;
         }
         else if (type == TokenType.NUMBER){
-            return Result.ok(Double.parseDouble(value));
+            return Double.parseDouble(value);
         }
-        return Result.ok(value);
+        return value;
     }
 
 }

@@ -1,11 +1,10 @@
 package org.intense.Ast;
 
 
-import org.intense.Environment;
 import org.intense.TokenType;
 
 public abstract class ASTNode {
-    public abstract Result<Object> eval(Environment environment);
+    public abstract Object eval();
     private TokenType getDataType(TokenType type1, TokenType type2) {
         if (type1 == type2) {
             return type1;

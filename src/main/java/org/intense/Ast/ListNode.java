@@ -1,12 +1,10 @@
 package org.intense.Ast;
 
 import org.intense.Closure;
-import org.intense.Environment;
 import org.intense.TokenType;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 public class ListNode extends ASTNode {
 
@@ -20,13 +18,33 @@ public class ListNode extends ASTNode {
         this.elements = elements;
     }
 
+    String getExtracted(ListNode input) {
+        StringBuilder result = new StringBuilder("( ");
+        for (ASTNode m_exp : input.elements) {
+            if (m_exp instanceof AtomNode) {
+                if (((AtomNode) m_exp).type == TokenType.STRING) {
+                    result.append(" \"").append(((AtomNode) m_exp).value).append("\"");
+                } else
+                    result.append(((AtomNode) m_exp).value).append(" \n");
+            } else if (m_exp instanceof ListNode) {
+                result.append(" ").append(getExtracted((ListNode) m_exp));
+            } else {
+                System.out.println("exp : " + m_exp);
+                result.append(m_exp.toString());
+            }
+
+        }
+        result.append(" )");
+        return result.toString();
+    }
+
     @Override
-    public Result<Object> eval(Environment env) {
-        if (elements.isEmpty()) return Result.ok(null);
+    public Object eval() {
+        if (elements.isEmpty()) return null;
 
         ASTNode first = elements.get(0);
         if (!(first instanceof AtomNode atom)) {
-            return Result.error(new RuntimeException("Expected operator symbol, got: " + first));
+            return new RuntimeException("Expected operator symbol, got: " + first);
         }
 
         String op = atom.value;
@@ -38,45 +56,69 @@ public class ListNode extends ASTNode {
                     if (size < 3) throw new IllegalArgumentException("Malformed define expression");
                     String name = ((AtomNode) elements.get(1)).value;
                     ASTNode second = elements.get(2);
-
-                    if (second instanceof ListNode params) {
-                        if (size < 4) throw new IllegalArgumentException("Function definition missing body");
-                        ASTNode body = elements.get(3);
-                        Closure function = new Closure(params, body, env);
-                        env.define(name, function);
-                        yield Result.ok(function);
-                    } else {
-                        Object value = second.eval(env);
-                        env.define(name, value);
-                        yield Result.ok(value);
+                    Object value = second.eval();
+                    env.define(name, value);
+                    yield value;
+                }
+                case "lambda" -> {
+                    if (size < 3) {
+                        yield new Exception("Malformed lambda: expected (lambda (params) body)");
                     }
+                    List<ASTNode> mBody = new ArrayList<>(elements.subList(1, elements.size()));
+                    yield new Closure(mBody);
                 }
                 case "if" -> {
                     if (size != 4) throw new IllegalArgumentException("Invalid if expression, expected 3 operands");
-                    Result<Object> condition = elements.get(1).eval(env);
-                    boolean result = condition.isSuccess();
-                    yield Result.ok((result)
-                            ? elements.get(2).eval(env)
-                            : elements.get(3).eval(env));
+                    Object condition = elements.get(1).eval();
+                    boolean result = condition != null && condition != (Boolean) false;
+                    yield (result
+                            ? elements.get(2).eval()
+                            : elements.get(3).eval());
                 }
-                case "lambda" -> {
-                    if (size != 3) throw new IllegalArgumentException("Malformed lambda expression");
-                    ASTNode rawParams = elements.get(1);
-                    if (!(rawParams instanceof ListNode paramList)) {
-                        throw new IllegalArgumentException("Expected list of parameters in lambda");
+                case "begin" -> {
+                    Object result = null;
+                    for (int i = 1; i < size; i++) {
+                        result = elements.get(i).eval();
                     }
-                    yield Result.ok(new Closure(paramList, elements.get(2), env));
+                    yield result;
                 }
-                // same for "begin", "quote", "display", "list"...
 
+                case "quote" -> {
+                    String result = "(";
+                    for (ASTNode exp : elements) {
+                        if (exp instanceof AtomNode) {
+                            result += ((AtomNode) exp).value + " \n";
+                        } else if (exp instanceof ListNode) {
+                            result += getExtracted((ListNode) exp);
+                        } else {
+                            System.out.println("exp : " + exp);
+                            result += exp.toString();
+                        }
+
+                    }
+                    result += ")";
+                    yield result;
+                }
+
+                case "display" -> {
+                    if (size < 2) yield new RuntimeException("display expects exactly 1 argument");
+                    Object val = elements.get(1).eval();
+                    System.out.println(val);
+                    yield "()";
+                }
+
+                case "list" -> {
+                    yield elements.get(1).eval();
+
+                }
                 case "+", "-", "*", "/" -> {
                     if (size < 3) throw new IllegalArgumentException(op + " expects at least 2 operands");
-                    Object firstEval = elements.get(1).eval(env);
+                    Object firstEval = elements.get(1).eval();
                     if (!(firstEval instanceof Number)) throw new IllegalArgumentException("Non-numeric operand");
 
                     double result = ((Number) firstEval).doubleValue();
                     for (int i = 2; i < size; i++) {
-                        Object nextEval = elements.get(i).eval(env);
+                        Object nextEval = elements.get(i).eval();
                         if (!(nextEval instanceof Number)) throw new IllegalArgumentException("Non-numeric operand");
                         double next = ((Number) nextEval).doubleValue();
 
@@ -90,28 +132,24 @@ public class ListNode extends ASTNode {
                             }
                         }
                     }
-                    yield Result.ok(result);
+                    yield result;
                 }
 
                 default -> {
                     if (atom.type == TokenType.SYMBOL) {
-                        Optional<Closure> closure = env.get(atom.value);
-                        if (closure.isPresent()) {
-                            List<Object> args = new ArrayList<>();
-                            for (int i = 1; i < size; i++) {
-                                args.add(elements.get(i).eval(env));
-                            }
-                            Optional<Object> result = closure.get().apply(args);
-                            yield result.map(Result::ok).orElseGet(() -> Result.error(new RuntimeException("Closure application failed")));
+                        Closure closure = env.get(atom.value);
+                        if (closure!=null) {
+                            Object result = closure.apply();
+                            yield result !=null ? result : new RuntimeException("Closure application failed");
                         }
-                        yield Result.ok(first.eval(env));
+                        yield first.eval();
                     } else {
                         throw new RuntimeException("Unknown operator: " + op);
                     }
                 }
             };
         } catch (Exception ex) {
-            return Result.error(ex);
+            return ex;
         }
     }
 
