@@ -1,10 +1,11 @@
 package org.intense.Ast;
 
-import org.intense.Closure;
+import org.intense.Builtin;
 import org.intense.TokenType;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class ListNode extends ASTNode {
 
@@ -16,6 +17,19 @@ public class ListNode extends ASTNode {
 
     public ListNode(List<ASTNode> elements) {
         this.elements = elements;
+    }
+
+    public Object apply(List<ASTNode> args, List<ASTNode> body) {
+        try {
+            Object result = null;
+            //1 st is lambda
+            for (ASTNode astNode : body) {
+                result = astNode.eval();
+            }
+            return Optional.ofNullable(result);
+        } catch (Exception e) {
+            throw new RuntimeException("closure application failed");
+        }
     }
 
     String getExtracted(ListNode input) {
@@ -49,107 +63,42 @@ public class ListNode extends ASTNode {
 
         String op = atom.value;
         int size = elements.size();
-
-        try {
-            return switch (op) {
-                case "define" -> {
-                    if (size < 3) throw new IllegalArgumentException("Malformed define expression");
-                    String name = ((AtomNode) elements.get(1)).value;
-                    ASTNode second = elements.get(2);
-                    Object value = second.eval();
-                    env.define(name, value);
-                    yield value;
-                }
-                case "lambda" -> {
-                    if (size < 3) {
-                        yield new Exception("Malformed lambda: expected (lambda (params) body)");
-                    }
-                    List<ASTNode> mBody = new ArrayList<>(elements.subList(1, elements.size()));
-                    yield new Closure(mBody);
-                }
-                case "if" -> {
-                    if (size != 4) throw new IllegalArgumentException("Invalid if expression, expected 3 operands");
-                    Object condition = elements.get(1).eval();
-                    boolean result = condition != null && condition != (Boolean) false;
-                    yield (result
-                            ? elements.get(2).eval()
-                            : elements.get(3).eval());
-                }
-                case "begin" -> {
-                    Object result = null;
-                    for (int i = 1; i < size; i++) {
-                        result = elements.get(i).eval();
-                    }
-                    yield result;
+        if (op.equals("quote")) {
+            StringBuilder result = new StringBuilder("(");
+            for (ASTNode exp : elements) {
+                if (exp instanceof AtomNode) {
+                    result.append(((AtomNode) exp).value).append(" \n");
+                } else if (exp instanceof ListNode) {
+                    result.append(getExtracted((ListNode) exp));
+                } else {
+                    System.out.println("exp : " + exp);
+                    result.append(exp.toString());
                 }
 
-                case "quote" -> {
-                    String result = "(";
-                    for (ASTNode exp : elements) {
-                        if (exp instanceof AtomNode) {
-                            result += ((AtomNode) exp).value + " \n";
-                        } else if (exp instanceof ListNode) {
-                            result += getExtracted((ListNode) exp);
-                        } else {
-                            System.out.println("exp : " + exp);
-                            result += exp.toString();
-                        }
-
-                    }
-                    result += ")";
-                    yield result;
+            }
+            result.append(")");
+            return result.toString();
+        }
+       else if(op.equals("def")) {
+            if (size < 3) throw new IllegalArgumentException("Malformed define expression");
+            String name = ((AtomNode) elements.get(1)).value;
+            List<ASTNode> function = new ArrayList<>(elements.subList(1, elements.size()));
+            env.define(name,function);
+            return  "(closure)";
+        }
+        else {
+           Builtin builtin = new Builtin(op, size, first, atom, elements);
+            Object result = Builtin.call();
+            if (atom.type == TokenType.SYMBOL && result==null) {
+                List<ASTNode> closure = env.lookup(atom.value);
+                if (closure != null) {
+                    List<ASTNode> args = new ArrayList<>(elements.subList(1, elements.size()));
+                    return apply(args, closure);
                 }
-
-                case "display" -> {
-                    if (size < 2) yield new RuntimeException("display expects exactly 1 argument");
-                    Object val = elements.get(1).eval();
-                    System.out.println(val);
-                    yield "()";
-                }
-
-                case "list" -> {
-                    yield elements.get(1).eval();
-
-                }
-                case "+", "-", "*", "/" -> {
-                    if (size < 3) throw new IllegalArgumentException(op + " expects at least 2 operands");
-                    Object firstEval = elements.get(1).eval();
-                    if (!(firstEval instanceof Number)) throw new IllegalArgumentException("Non-numeric operand");
-
-                    double result = ((Number) firstEval).doubleValue();
-                    for (int i = 2; i < size; i++) {
-                        Object nextEval = elements.get(i).eval();
-                        if (!(nextEval instanceof Number)) throw new IllegalArgumentException("Non-numeric operand");
-                        double next = ((Number) nextEval).doubleValue();
-
-                        switch (op) {
-                            case "+" -> result += next;
-                            case "-" -> result -= next;
-                            case "*" -> result *= next;
-                            case "/" -> {
-                                if (next == 0) throw new ArithmeticException("Division by zero");
-                                result /= next;
-                            }
-                        }
-                    }
-                    yield result;
-                }
-
-                default -> {
-                    if (atom.type == TokenType.SYMBOL) {
-                        Closure closure = env.get(atom.value);
-                        if (closure!=null) {
-                            Object result = closure.apply();
-                            yield result !=null ? result : new RuntimeException("Closure application failed");
-                        }
-                        yield first.eval();
-                    } else {
-                        throw new RuntimeException("Unknown operator: " + op);
-                    }
-                }
-            };
-        } catch (Exception ex) {
-            return ex;
+                return first.eval();
+            } else {
+                return result;
+            }
         }
     }
 

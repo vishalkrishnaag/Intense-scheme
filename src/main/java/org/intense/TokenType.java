@@ -8,7 +8,7 @@ public enum TokenType {
     STRING, BOOLEAN,
     QUOTE, QUASIQUOTE,
     UNQUOTE, UNQUOTE_SPLICING,
-    DOT, EOF, Closure,
+    DOT,COLON, EOF, Closure,
     BIG_INT,
     INT,
     DOUBLE,

@@ -1,7 +1,5 @@
 package org.intense;
-import org.intense.Ast.ASTNode;
-import org.intense.Ast.AtomNode;
-import org.intense.Ast.ListNode;
+import org.intense.Ast.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,6 +24,7 @@ public class Parser {
     public ASTNode parse() {
         if (currentToken.type == TokenType.LPAREN) {
             consume(TokenType.LPAREN);
+            //
             List<ASTNode> elements = new ArrayList<>();
             while (currentToken.type != TokenType.RPAREN && currentToken.type != TokenType.EOF) {
                 elements.add(parse());
@@ -39,7 +38,7 @@ public class Parser {
                 elements.add(parse());
             }
             consume(TokenType.RLIST); // eat `[`
-            return new ListNode(elements);
+            return new DataListNode(elements);
         }
         else if (currentToken.type == TokenType.LBRACE) {
             consume(TokenType.LBRACE);
@@ -48,7 +47,7 @@ public class Parser {
                 elements.add(parse());
             }
             consume(TokenType.RBRACE); // eat `}`
-            return new ListNode(elements);
+            return new MapNode(elements);
         }
         else if (currentToken.type == TokenType.RPAREN ||
                 currentToken.type == TokenType.RLIST ||

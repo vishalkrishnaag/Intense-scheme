@@ -19,6 +19,7 @@ public class Interpreter {
         ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
         List<Future<Object>> results = new ArrayList<>();
+        ASTNode.env = environment;
         for (ASTNode node : astNodes) {
             results.add(executor.submit(node::eval));
         }

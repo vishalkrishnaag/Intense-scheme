@@ -132,6 +132,7 @@ public class Lexer {
             case "," -> new Token(TokenType.UNQUOTE, symbol, startLine, startCol);
             case "~@" -> new Token(TokenType.UNQUOTE_SPLICING, symbol, startLine, startCol);
             case "." -> new Token(TokenType.DOT, symbol, startLine, startCol);
+            case ":" -> new Token(TokenType.COLON, symbol, startLine, startCol);
             default -> new Token(TokenType.SYMBOL, symbol, startLine, startCol);
         };
     }
