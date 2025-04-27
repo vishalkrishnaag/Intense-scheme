@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -25,6 +26,22 @@ public class RequiredNode extends ASTNode {
     @Override
     public Object eval(Environment env) {
         // Step 1: Convert the string path to a Path object (works across platforms)
+        String[] parts = dependency.split("\\.");
+        if (parts.length >= 2) {
+            String method = parts[parts.length - 1]; // last one
+            String file = parts[parts.length - 2];   // second last
+
+            String folder = "";
+            if (parts.length > 2) {
+                folder = String.join("/", Arrays.copyOf(parts, parts.length - 2));
+            }
+
+            System.out.println("Folder : " + folder);
+            System.out.println("File   : " + file);
+            System.out.println("Method : " + method);
+        } else {
+            System.out.println("Invalid format. Expected at least file.method structure.");
+        }
         Path path = Paths.get(dependency);
 
 
