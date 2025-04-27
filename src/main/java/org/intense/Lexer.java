@@ -24,6 +24,9 @@ public class Lexer {
         KEYWORDS.put("set!", TokenType.SET);
         KEYWORDS.put("this", TokenType.THIS);
         KEYWORDS.put("package", TokenType.PACKAGE);
+        KEYWORDS.put("require", TokenType.REQUIERE);
+        KEYWORDS.put("while", TokenType.WHILE);
+        KEYWORDS.put("for", TokenType.FOR);
     }
 
     public Lexer(String input) {

@@ -13,6 +13,7 @@ public class SetNode extends ASTNode{
     @Override
     public Object eval(Environment env) {
         // (set! my-heart "like this marvelous ")
-        return null;
+        env.define(variableName.value,expr);
+        return "set!";
     }
 }

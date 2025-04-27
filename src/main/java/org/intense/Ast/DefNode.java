@@ -7,9 +7,9 @@ import java.util.List;
 import java.util.Map;
 
 public class DefNode extends ASTNode{
-    private final List<ASTNode> body;
+    private final ASTNode body;
     private final AtomNode name;
-    public DefNode(AtomNode methodName, List<ASTNode> body) {
+    public DefNode(AtomNode methodName,ASTNode body) {
         this.name = methodName;
         this.body = body;
     }

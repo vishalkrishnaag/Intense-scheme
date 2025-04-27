@@ -39,8 +39,13 @@ public class Parser {
             Token token = currentToken;
             consume(TokenType.STRING);
             return new PackageNode(token.value);
-        }
-        else if(currentToken.type == TokenType.DEF){
+        } else if (currentToken.type == TokenType.REQUIERE) {
+            advance();
+            Token token = currentToken;
+            consume(TokenType.STRING);
+            return new RequiredNode(token.value);
+
+        } else if(currentToken.type == TokenType.DEF){
             advance();
             AtomNode atom = parseIfAtom();
             // function name should be a symbol
@@ -94,12 +99,12 @@ public class Parser {
         return new CallNode(first,rest);
     }
 
-    private List<ASTNode> parseDefine() {
+    private ListNode parseDefine() {
         List<ASTNode> elements = new ArrayList<>();
         while (currentToken.type != TokenType.RPAREN && currentToken.type != TokenType.EOF) {
             elements.add(parse());
         }
-        return elements;
+        return new ListNode(elements);
     }
 
     private ASTNode parseMapNode() {
@@ -107,7 +112,6 @@ public class Parser {
         Map<String,ASTNode> keyMap = new HashMap<>();
         String key;
         while (currentToken.type != TokenType.RBRACE && currentToken.type != TokenType.EOF) {
-            key =null;
                 if (currentToken.type == TokenType.COLON) {
                     advance();
                     AtomNode atomNode = parseIfAtom();
@@ -116,7 +120,8 @@ public class Parser {
                     ASTNode data = parse();
                     if (key == null) throw new RuntimeException("Key or value is missing");
                     keyMap.put(key, data);
-                } else {
+                }
+                else {
                     throw new RuntimeException("a map must require a proper :key "+currentToken);
                 }
 

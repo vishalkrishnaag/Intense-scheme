@@ -41,7 +41,8 @@ public class AtomNode extends ASTNode {
         if (type == TokenType.SYMBOL) {;
             if(env !=null)
             {
-                List<ASTNode> data= env.lookup(value);
+                ASTNode data= env.lookup(value);
+                data.eval(env);
                 //todo: need rework
             }
             return value;

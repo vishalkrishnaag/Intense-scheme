@@ -53,6 +53,7 @@ public class ListNode extends ASTNode {
             case CallNode callNode -> callNode.eval(env);
             case PackageNode packageNode -> packageNode.eval(env);
             case SetNode setNode -> setNode.eval(env);
+            case RequiredNode required -> required.eval(env);
             default -> {
                 System.err.println("unknown operation found "+ first);
                 yield null;

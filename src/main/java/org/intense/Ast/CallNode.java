@@ -1,17 +1,17 @@
 package org.intense.Ast;
 
-import org.intense.Builtin;
 import org.intense.Environment;
 
 import java.util.List;
+import java.util.Map;
 
 public class CallNode extends ASTNode {
     private ASTNode operand;
-    private ASTNode operation;
+    private ASTNode params;
 
     public CallNode(ASTNode first, ASTNode rest) {
         this.operand = first;
-        this.operation = rest;
+        this.params = rest;
     }
 
     @Override
@@ -23,7 +23,7 @@ public class CallNode extends ASTNode {
 
         switch (atom.value) {
             case "+" -> {
-                if (!(operation instanceof ListNode listNode))
+                if (!(params instanceof ListNode listNode))
                     return new RuntimeException("requires at least one input " + operand);
                 double result = 0.0;
                 for (ASTNode items : listNode.elements) {
@@ -32,7 +32,7 @@ public class CallNode extends ASTNode {
                 return result;
             }
             case "-" -> {
-                if (!(operation instanceof ListNode listNode))
+                if (!(params instanceof ListNode listNode))
                     return new RuntimeException("requires at least one input " + operand);
                 double result = 0.0;
                 for (ASTNode items : listNode.elements) {
@@ -41,7 +41,7 @@ public class CallNode extends ASTNode {
                 return result;
             }
             case "*" -> {
-                if (!(operation instanceof ListNode listNode))
+                if (!(params instanceof ListNode listNode))
                     return new RuntimeException("requires at least one input " + operand);
                 double result = 0.0;
                 for (ASTNode items : listNode.elements) {
@@ -50,7 +50,7 @@ public class CallNode extends ASTNode {
                 return result;
             }
             case "/" -> {
-                if (!(operation instanceof ListNode listNode))
+                if (!(params instanceof ListNode listNode))
                     return new RuntimeException("requires at least one input " + operand);
                 double result = 0.0;
                 for (ASTNode items : listNode.elements) {
@@ -59,7 +59,7 @@ public class CallNode extends ASTNode {
                 return result;
             }
             case "%" -> {
-                if (!(operation instanceof ListNode listNode))
+                if (!(params instanceof ListNode listNode))
                     return new RuntimeException("requires at least one input " + operand);
                 double result = 0.0;
                 for (ASTNode items : listNode.elements) {
@@ -68,7 +68,7 @@ public class CallNode extends ASTNode {
                 return result;
             }
             case "^" -> {
-                if (!(operation instanceof ListNode listNode))
+                if (!(params instanceof ListNode listNode))
                     return new RuntimeException("requires at least one input " + operand);
                 boolean result = false;
                 for (ASTNode items : listNode.elements) {
@@ -77,7 +77,7 @@ public class CallNode extends ASTNode {
                 return result;
             }
             case "and" -> {
-                if (!(operation instanceof ListNode listNode))
+                if (!(params instanceof ListNode listNode))
                     return new RuntimeException("requires at least one input " + operand);
                 boolean
                         result = false;
@@ -87,7 +87,7 @@ public class CallNode extends ASTNode {
                 return result;
             }
             case "or" -> {
-                if (!(operation instanceof ListNode listNode))
+                if (!(params instanceof ListNode listNode))
                     return new RuntimeException("requires at least one input " + operand);
                 boolean
                         result = false;
@@ -97,7 +97,7 @@ public class CallNode extends ASTNode {
                 return result;
             }
             case "not" -> {
-                if (!(operation instanceof ListNode listNode))
+                if (!(params instanceof ListNode listNode))
                     return new RuntimeException("requires at least one input " + operand);
                 boolean
                         result = false;
@@ -107,7 +107,7 @@ public class CallNode extends ASTNode {
                 return result;
             }
             case "in" -> {
-                if (!(operation instanceof ListNode listNode))
+                if (!(params instanceof ListNode listNode))
                     return new RuntimeException("requires at least one input " + operand);
                 double result = 0.0;
                 for (ASTNode items : listNode.elements) {
@@ -116,14 +116,19 @@ public class CallNode extends ASTNode {
                 return result;
             }
             case "display" ->{
-                System.out.println(operation.eval(env));
+                System.out.println(params.eval(env));
             }
             default -> {
                 // method call
-               List<ASTNode> closure = env.lookup(atom.value);
-               for ( ASTNode m_closure : closure){
-                   m_closure.eval(env);
-               }
+                if((params instanceof MapNode argumentMap))
+                {
+                    for (Map.Entry<String, ASTNode> arguments : argumentMap.object.entrySet())
+                    {
+                      env.define(arguments.getKey(),arguments.getValue());
+                    }
+                }
+               ASTNode closure = env.lookup(atom.value);
+                closure.eval(env);
             }
         }
         return null;
