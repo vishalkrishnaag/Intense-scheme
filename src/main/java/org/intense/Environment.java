@@ -7,16 +7,13 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Environment {
+
     private final Map<String, List<ASTNode>> store = new ConcurrentHashMap<>();
-    private final Map<String,TokenType> typeStore = new ConcurrentHashMap<>();
-    private final Environment parent;
+    private final Map<String,String> packageList = new ConcurrentHashMap<>();
+    private  Environment parent;
 
-    public Environment() {
-        this.parent = null;
-    }
-
-    public Environment(Environment parent) {
-        this.parent = parent;
+    public Environment(Environment env) {
+        parent = env;
     }
 
     public void define(String name,List<ASTNode> value) {
@@ -24,10 +21,19 @@ public class Environment {
     }
 
     public List<ASTNode> lookup(String name) {
-        List<ASTNode> value = store.get(name);
-        if (value != null) return value;
+        if (store.containsKey(name)) return store.get(name);
         if (parent != null) return parent.lookup(name);
-        return null;
+        throw new RuntimeException("Unbound variable: " + name);
+    }
+
+    public void set(String name,List<ASTNode> value) {
+        if (store.containsKey(name)) {
+            store.put(name, value);
+        } else if (parent != null) {
+            parent.set(name, value);
+        } else {
+            throw new RuntimeException("Unbound variable: " + name);
+        }
     }
 
     public void delete(String name) {

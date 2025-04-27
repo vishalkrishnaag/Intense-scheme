@@ -19,7 +19,7 @@ public class Main {
                 Lexer lexer = new Lexer(content);
                 Parser parser = new Parser(lexer);
                 List<ASTNode> astNodes = parser.getParseTree();
-                Environment environment = new Environment();
+                Environment environment = new Environment(null);
                 Interpreter interpreter = new Interpreter(environment);
                 interpreter.run(astNodes);
 
@@ -30,7 +30,7 @@ public class Main {
             // REPL mode
             System.out.println("Intense REPL (type 'exit' to quit)");
             BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-            Environment environment = new Environment();
+            Environment environment = new Environment(null);
             while (true) {
                 System.out.print("> ");
                 try {

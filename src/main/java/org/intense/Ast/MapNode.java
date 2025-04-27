@@ -1,16 +1,21 @@
 package org.intense.Ast;
 
-import java.util.List;
+import org.intense.Environment;
+import org.intense.TokenType;
 
-public class MapNode extends ASTNode{
-    public final List<ASTNode> object;
+import java.util.HashMap;
+import java.util.Map;
 
-    public MapNode(List<ASTNode> object) {
+public class MapNode extends ASTNode {
+    Map<String,ASTNode> object = new HashMap<>();
+
+    public MapNode(Map<String,ASTNode> object) {
         this.object = object;
     }
 
     @Override
-    public Object eval()  {
-        return new Exception("this Section is under development");
+    public Object eval(Environment env) {
+//        env.define(object.keySet().toString(),object.values().stream().toList());
+        return object;
     }
 }

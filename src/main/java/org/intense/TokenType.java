@@ -8,7 +8,9 @@ public enum TokenType {
     STRING, BOOLEAN,
     QUOTE, QUASIQUOTE,
     UNQUOTE, UNQUOTE_SPLICING,
-    DOT,COLON, EOF, Closure,
+    COLON, EOF,
+    IF,DEF,THIS,
+    Closure,
     BIG_INT,
     INT,
     DOUBLE,
@@ -17,5 +19,5 @@ public enum TokenType {
     ARRAY_DOUBLE,
     ARRAY_OBJECT,
     UNDEFINED,
-    INVALID
+    SET, PACKAGE, INVALID
 }

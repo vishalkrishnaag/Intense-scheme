@@ -3,12 +3,28 @@ package org.intense;
 import java.util.ArrayList;
 import java.util.List;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class Lexer {
     private final String input;
     private int position;
     private int line;
     private int column;
     private char currentChar;
+
+    private static final Map<String, TokenType> KEYWORDS = new HashMap<>();
+
+    static {
+        KEYWORDS.put("true", TokenType.BOOLEAN);
+        KEYWORDS.put("false", TokenType.BOOLEAN);
+        KEYWORDS.put("def", TokenType.DEF);
+        KEYWORDS.put("if", TokenType.IF);
+        KEYWORDS.put("quote", TokenType.QUOTE);
+        KEYWORDS.put("set!", TokenType.SET);
+        KEYWORDS.put("this", TokenType.THIS);
+        KEYWORDS.put("package", TokenType.PACKAGE);
+    }
 
     public Lexer(String input) {
         this.input = input;
@@ -25,13 +41,8 @@ public class Lexer {
         } else {
             column++;
         }
-
         position++;
-        if (position < input.length()) {
-            currentChar = input.charAt(position);
-        } else {
-            currentChar = '\0';
-        }
+        currentChar = position < input.length() ? input.charAt(position) : '\0';
     }
 
     private void skipWhitespace() {
@@ -44,46 +55,30 @@ public class Lexer {
         while (currentChar != '\0' && currentChar != '\n') {
             advance();
         }
-        if (currentChar == '\n') {
-            advance();
-        }
+        if (currentChar == '\n') advance();
     }
 
     private Token readString() {
-        advance(); // skip opening quote
+        advance();  // skip opening quote
         StringBuilder sb = new StringBuilder();
-        int startLine = line;
-        int startCol = column;
+        int startLine = line, startCol = column;
 
         while (currentChar != '\0' && currentChar != '"') {
             if (currentChar == '\\') {
                 advance();
                 switch (currentChar) {
-                    case 'n':
-                        sb.append('\n');
-                        break;
-                    case 't':
-                        sb.append('\t');
-                        break;
-                    case 'r':
-                        sb.append('\r');
-                        break;
-                    case '"':
-                        sb.append('"');
-                        break;
-                    case '\\':
-                        sb.append('\\');
-                        break;
-                    default:
-                        sb.append('\\').append(currentChar);
-                        break;
+                    case 'n': sb.append('\n'); break;
+                    case 't': sb.append('\t'); break;
+                    case 'r': sb.append('\r'); break;
+                    case '"': sb.append('"'); break;
+                    case '\\': sb.append('\\'); break;
+                    default: sb.append('\\').append(currentChar); break;
                 }
             } else {
                 sb.append(currentChar);
             }
             advance();
         }
-
         if (currentChar == '"') {
             advance();
             return new Token(TokenType.STRING, sb.toString(), startLine, startCol);
@@ -94,8 +89,7 @@ public class Lexer {
 
     private Token readNumber() {
         StringBuilder sb = new StringBuilder();
-        int startLine = line;
-        int startCol = column;
+        int startLine = line, startCol = column;
 
         while (currentChar != '\0' &&
                 (Character.isDigit(currentChar) || currentChar == '.' ||
@@ -104,41 +98,29 @@ public class Lexer {
             sb.append(currentChar);
             advance();
         }
-
-        String numStr = sb.toString();
-        return new Token(TokenType.NUMBER, numStr, startLine, startCol);
+        return new Token(TokenType.NUMBER, sb.toString(), startLine, startCol);
     }
 
     private Token readSymbol() {
         StringBuilder sb = new StringBuilder();
-        int startLine = line;
-        int startCol = column;
+        int startLine = line, startCol = column;
 
         while (currentChar != '\0' &&
                 !Character.isWhitespace(currentChar) &&
-                !isTerminator(currentChar)) {
+                !isTerminator(currentChar) &&
+                currentChar != ':') {
             sb.append(currentChar);
             advance();
         }
 
         String symbol = sb.toString();
-
-        // Check for special symbols
-        return switch (symbol) {
-            case "true" -> new Token(TokenType.BOOLEAN, "true", startLine, startCol);
-            case "false" -> new Token(TokenType.BOOLEAN, "false", startLine, startCol);
-            case "'" -> new Token(TokenType.QUOTE, symbol, startLine, startCol);
-            case "`" -> new Token(TokenType.QUASIQUOTE, symbol, startLine, startCol);
-            case "," -> new Token(TokenType.UNQUOTE, symbol, startLine, startCol);
-            case "~@" -> new Token(TokenType.UNQUOTE_SPLICING, symbol, startLine, startCol);
-            case "." -> new Token(TokenType.DOT, symbol, startLine, startCol);
-            case ":" -> new Token(TokenType.COLON, symbol, startLine, startCol);
-            default -> new Token(TokenType.SYMBOL, symbol, startLine, startCol);
-        };
+        TokenType type = KEYWORDS.getOrDefault(symbol, TokenType.SYMBOL);
+        return new Token(type, symbol, startLine, startCol);
     }
 
     private boolean isTerminator(char c) {
-        return c == '(' || c == ')' || c == '"' || c == ';';
+        return c == '(' || c == ')' || c == '"' || c == ';' ||
+                c == '[' || c == ']' || c == '{' || c == '}';
     }
 
     public Token nextToken() {
@@ -153,41 +135,22 @@ public class Lexer {
                 continue;
             }
 
+            int startLine = line, startCol = column;
+
             switch (currentChar) {
-                case '(':
-                    Token lparen = new Token(TokenType.LPAREN, "(", line, column);
-                    advance();
-                    return lparen;
-                case ')':
-                    Token rparen = new Token(TokenType.RPAREN, ")", line, column);
-                    advance();
-                    return rparen;
-                case '[':
-                    Token llist = new Token(TokenType.LLIST, "[", line, column);
-                    advance();
-                    return llist;
-                case ']':
-                    Token rlist = new Token(TokenType.RLIST, "[", line, column);
-                    advance();
-                    return rlist;
-                case '{':
-                    Token lbrace = new Token(TokenType.LBRACE, "{", line, column);
-                    advance();
-                    return lbrace;
-                case '}':
-                    Token rbrace = new Token(TokenType.RBRACE, "}", line, column);
-                    advance();
-                    return rbrace;
-                case '"':
-                    return readString();
-                case '+':
-                case '-':
-                    // Check if this is part of a number
-                    if (Character.isDigit(input.charAt(position + 1))) {
+                case '(': advance(); return new Token(TokenType.LPAREN, "(", startLine, startCol);
+                case ')': advance(); return new Token(TokenType.RPAREN, ")", startLine, startCol);
+                case '[': advance(); return new Token(TokenType.LLIST, "[", startLine, startCol);
+                case ']': advance(); return new Token(TokenType.RLIST, "]", startLine, startCol);
+                case '{': advance(); return new Token(TokenType.LBRACE, "{", startLine, startCol);
+                case '}': advance(); return new Token(TokenType.RBRACE, "}", startLine, startCol);
+                case ':': advance(); return new Token(TokenType.COLON, ":", startLine, startCol);
+                case '"': return readString();
+                case '+': case '-':
+                    if (position + 1 < input.length() && Character.isDigit(input.charAt(position + 1))) {
                         return readNumber();
-                    } else{
-                        return readSymbol();
                     }
+                    return readSymbol();
                 default:
                     if (Character.isDigit(currentChar)) {
                         return readNumber();
@@ -196,7 +159,6 @@ public class Lexer {
                     }
             }
         }
-
         return new Token(TokenType.EOF, "", line, column);
     }
 
@@ -210,3 +172,7 @@ public class Lexer {
         return tokens;
     }
 }
+
+
+
+

@@ -4,9 +4,11 @@ package org.intense.Ast;
 import org.intense.Environment;
 import org.intense.TokenType;
 
+import java.util.List;
+import java.util.Map;
+
 public abstract class ASTNode {
-    protected static Environment env;
-    public abstract Object eval();
+    public abstract Object eval(Environment env);
     private TokenType getDataType(TokenType type1, TokenType type2) {
         if (type1 == type2) {
             return type1;

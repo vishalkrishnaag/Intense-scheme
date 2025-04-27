@@ -1,6 +1,11 @@
 package org.intense.Ast;
 
+import org.intense.Environment;
 import org.intense.TokenType;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 public class AtomNode extends ASTNode {
     TokenType type;
@@ -18,9 +23,27 @@ public class AtomNode extends ASTNode {
 
     }
 
+    public Object apply(ListNode args, List<ASTNode> body) {
+        try {
+            Object result = null;
+            //1 st is lambda
+            for (ASTNode astNode : body) {
+                result = astNode.eval(null);
+            }
+            return Optional.ofNullable(result);
+        } catch (Exception e) {
+            throw new RuntimeException("closure application failed");
+        }
+    }
+
     @Override
-    public Object eval(){
-        if (type == TokenType.SYMBOL) {
+    public Object eval(Environment env) {
+        if (type == TokenType.SYMBOL) {;
+            if(env !=null)
+            {
+                List<ASTNode> data= env.lookup(value);
+                //todo: need rework
+            }
             return value;
         }
         else if (type == TokenType.NUMBER){
@@ -28,5 +51,4 @@ public class AtomNode extends ASTNode {
         }
         return value;
     }
-
 }
