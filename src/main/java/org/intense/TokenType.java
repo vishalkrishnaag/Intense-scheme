@@ -14,11 +14,13 @@ public enum TokenType {
     Closure,
     BIG_INT,
     INT,
+    FLOAT,
+    LONG,
     DOUBLE,
     OBJECT,
     ARRAY_INT,
     ARRAY_DOUBLE,
     ARRAY_OBJECT,
     UNDEFINED,
-    SET, PACKAGE, WHILE, FOR, INVALID
+    SET, PACKAGE, WHILE, FOR, MAP_KEY, GET, INVALID
 }

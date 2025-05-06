@@ -1,7 +1,7 @@
 package org.intense;
 
-import org.intense.Ast.ASTNode;
-import org.intense.Ast.AtomNode;
+import org.intense.ast.ASTNode;
+import org.intense.ast.AtomNode;
 
 import java.util.HashMap;
 import java.util.List;
@@ -31,11 +31,6 @@ public class Builtin {
     }
 
     private final Map<String, BuiltInFunction> builtInMethods = new HashMap<>();
-
-
-    static {
-
-    }
 
     public static Object call() {
         return null;

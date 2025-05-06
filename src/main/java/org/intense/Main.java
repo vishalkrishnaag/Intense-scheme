@@ -1,6 +1,6 @@
 package org.intense;
-import org.intense.Ast.ASTNode;
-import org.intense.Ast.Interpreter;
+import org.intense.ast.ASTNode;
+import org.intense.ast.Interpreter;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -19,7 +19,7 @@ public class Main {
                 Lexer lexer = new Lexer(content);
                 Parser parser = new Parser(lexer);
                 List<ASTNode> astNodes = parser.getParseTree();
-                Environment environment = new Environment(null);
+                SymbolTable environment = new SymbolTable(null);
                 Interpreter interpreter = new Interpreter(environment);
                 interpreter.run(astNodes);
 
@@ -30,7 +30,7 @@ public class Main {
             // REPL mode
             System.out.println("Intense REPL (type 'exit' to quit)");
             BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-            Environment environment = new Environment(null);
+            SymbolTable environment = new SymbolTable(null);
             while (true) {
                 System.out.print("> ");
                 try {

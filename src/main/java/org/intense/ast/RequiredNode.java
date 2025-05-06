@@ -1,6 +1,6 @@
-package org.intense.Ast;
+package org.intense.ast;
 
-import org.intense.Environment;
+import org.intense.SymbolTable;
 import org.intense.Lexer;
 import org.intense.Parser;
 
@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -20,28 +19,29 @@ public class RequiredNode extends ASTNode {
     }
 
     /**
+     * @param env
+     * @return
+     * @throws TypeException
+     */
+    @Override
+    public Type inferType(SymbolTable env) {
+        return null;
+    }
+
+    /**
+     * @return
+     */
+    @Override
+    public String toKotlinCode(SymbolTable env) {
+        return "";
+    }
+
+    /**
      * @param env Environment which handles this
      * @return object
      */
-    @Override
-    public Object eval(Environment env) {
+    public String eval(SymbolTable env) {
         // Step 1: Convert the string path to a Path object (works across platforms)
-        String[] parts = dependency.split("\\.");
-        if (parts.length >= 2) {
-            String method = parts[parts.length - 1]; // last one
-            String file = parts[parts.length - 2];   // second last
-
-            String folder = "";
-            if (parts.length > 2) {
-                folder = String.join("/", Arrays.copyOf(parts, parts.length - 2));
-            }
-
-            System.out.println("Folder : " + folder);
-            System.out.println("File   : " + file);
-            System.out.println("Method : " + method);
-        } else {
-            System.out.println("Invalid format. Expected at least file.method structure.");
-        }
         Path path = Paths.get(dependency);
 
 
@@ -59,7 +59,7 @@ public class RequiredNode extends ASTNode {
                 Lexer lexer = new Lexer(content);
                 Parser parser = new Parser(lexer);
                 List<ASTNode> astNodes = parser.getParseTree();
-                Environment environment = new Environment(env);
+                SymbolTable environment = new SymbolTable(env);
                 Interpreter interpreter = new Interpreter(environment);
                 interpreter.run(astNodes);
             } else {

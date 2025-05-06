@@ -21,7 +21,6 @@ public class Lexer {
         KEYWORDS.put("def", TokenType.DEF);
         KEYWORDS.put("if", TokenType.IF);
         KEYWORDS.put("quote", TokenType.QUOTE);
-        KEYWORDS.put("set!", TokenType.SET);
         KEYWORDS.put("this", TokenType.THIS);
         KEYWORDS.put("package", TokenType.PACKAGE);
         KEYWORDS.put("require", TokenType.REQUIERE);
@@ -34,7 +33,7 @@ public class Lexer {
         this.position = 0;
         this.line = 1;
         this.column = 1;
-        this.currentChar = input.length() > 0 ? input.charAt(0) : '\0';
+        this.currentChar = !input.isEmpty() ? input.charAt(0) : '\0';
     }
 
     private void advance() {

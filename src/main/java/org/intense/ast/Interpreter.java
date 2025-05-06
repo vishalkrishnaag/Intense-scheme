@@ -1,14 +1,14 @@
-package org.intense.Ast;
+package org.intense.ast;
 
-import org.intense.Environment;
+import org.intense.SymbolTable;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
 
 public class Interpreter {
-    Environment environment;
-    public Interpreter(Environment environment) {
+    SymbolTable environment;
+    public Interpreter(SymbolTable environment) {
         this.environment = environment;
     }
 
@@ -17,6 +17,7 @@ public class Interpreter {
 
         List<Future<Object>> results = new ArrayList<>();
         for (ASTNode node : astNodes) {
+            System.out.println("exec node -> "+node);
             Callable<Object> task = () ->node.eval(environment);
             results.add(executor.submit(task));
         }

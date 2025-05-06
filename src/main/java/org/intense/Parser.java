@@ -1,6 +1,6 @@
 package org.intense;
 
-import org.intense.Ast.*;
+import org.intense.ast.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -18,112 +18,106 @@ public class Parser {
         this.currentToken = lexer.nextToken();
         this.nodeList = new ArrayList<>();
         while (currentToken.type != TokenType.EOF) {
-            this.nodeList.add(this.parse());
+            ASTNode input = this.parse();
+            if (input != null)
+                this.nodeList.add(input);
         }
 
     }
 
     public ASTNode parse() {
-        if (currentToken.type == TokenType.LPAREN) {
-            advance();
-            //
-            List<ASTNode> elements = new ArrayList<>();
-            while (currentToken.type != TokenType.RPAREN && currentToken.type != TokenType.EOF) {
-                elements.add(parse());
+        switch (currentToken.type) {
+            case TokenType.LPAREN -> {
+                advance();
+                List<ASTNode> elements = new ArrayList<>();
+                while (currentToken.type != TokenType.RPAREN && currentToken.type != TokenType.EOF) {
+                    elements.add(parse());
+                }
+                consume(TokenType.RPAREN); // eat `)`
+                return new DataListNode(elements);
             }
-            consume(TokenType.RPAREN); // eat `)`
-            return new ListNode(elements);
-        }
-        else if (currentToken.type == TokenType.PACKAGE) {
-            advance();
-            Token token = currentToken;
-            consume(TokenType.STRING);
-            return new PackageNode(token.value);
-        } else if (currentToken.type == TokenType.REQUIERE) {
-            advance();
-            Token token = currentToken;
-            consume(TokenType.STRING);
-            return new RequiredNode(token.value);
-
-        } else if(currentToken.type == TokenType.DEF){
-            advance();
-            AtomNode atom = parseIfAtom();
-            // function name should be a symbol
-            consume(TokenType.SYMBOL);
-
-           return new DefNode(atom,parseDefine());
-        } else if (currentToken.type == TokenType.SET) {
-            advance();
-            AtomNode atomNode = parseIfAtom();
-            consume(TokenType.SYMBOL);
-            return new SetNode(atomNode,parse());
-
-        } else if(currentToken.type == TokenType.IF){
-            advance();
-            // function name should be a symbol
-            ASTNode ifExpr = parse();
-            ASTNode ifBody = parse();
-            ASTNode elseBody=parse();
-            return new IfConditionNode(ifExpr,ifBody,elseBody);
-        }
-        else if (currentToken.type == TokenType.LLIST) {
-            advance();
-            List<ASTNode> elements = new ArrayList<>();
-            while (currentToken.type != TokenType.RPAREN && currentToken.type != TokenType.EOF) {
-                elements.add(parse());
+            case TokenType.COLON -> {
+                advance();
+                AtomNode atom = parseIfAtom();
+                advance();
+                atom.setType(TokenType.MAP_KEY);
+                return atom;
             }
-            consume(TokenType.RLIST); // eat `[`
-            return new DataListNode(elements);
-        } else if (currentToken.type == TokenType.LBRACE) {
-           return parseMapNode();// eat `}`
-        } else if(currentToken.type == TokenType.SYMBOL)
-        {
-            // method call (x {:y 30}) or built in
-           return parseCallNode();
-        }
-        else if (currentToken.type == TokenType.RLIST ||
-                currentToken.type == TokenType.RBRACE) {
-            throw new RuntimeException("unexpected closing ) or } or ]");
-        }
-        else if (currentToken.type == TokenType.RPAREN) {
-            return null;
-        }
-        else {
-            return parseAtom();
+            case TokenType.REQUIERE -> {
+                advance();
+                Token token = currentToken;
+                consume(TokenType.STRING);
+                return new RequiredNode(token.value);
+
+            }
+            case TokenType.DEF -> {
+                advance();
+                AtomNode atom = parseIfAtom();
+                // function name should be a symbol
+                consume(TokenType.SYMBOL);
+                List<ASTNode> elements = new ArrayList<>();
+                while (currentToken.type != TokenType.RPAREN && currentToken.type != TokenType.EOF) {
+                    elements.add(parse());
+                }
+                return new DefNode(atom, new DataListNode(elements));
+            }
+            case TokenType.IF -> {
+                advance();
+                // function name should be a symbol
+                ASTNode ifExpr = parse();
+                ASTNode ifBody = parse();
+                ASTNode elseBody = parse();
+                return new IfConditionNode(ifExpr, ifBody, elseBody);
+            }
+            case TokenType.LLIST -> {
+                advance();
+                List<ASTNode> elements = new ArrayList<>();
+                while (currentToken.type != TokenType.RLIST && currentToken.type != TokenType.EOF) {
+                    elements.add(parse());
+                }
+                consume(TokenType.RLIST); // eat `[`
+                return new DataListNode(elements);
+            }
+            case TokenType.LBRACE -> {
+                return parseMapNode();// eat `}`
+            }
+            case TokenType.SYMBOL -> {
+                // method call (x {:y 30}) or built in
+                return parseCallNode();
+            }
+            case  TokenType.RBRACE -> {
+                throw new RuntimeException("unexpected closing ) or } or ] , got "+currentToken);
+            }
+            case TokenType.RPAREN , RLIST -> {
+                return null;
+            }
+            default -> {
+                return parseAtom();
+            }
         }
     }
 
     private ASTNode parseCallNode() {
         ASTNode first = parseAtom();
         ASTNode rest = parse();
-        return new CallNode(first,rest);
+        return new CallNode(first, rest);
     }
 
-    private ListNode parseDefine() {
-        List<ASTNode> elements = new ArrayList<>();
-        while (currentToken.type != TokenType.RPAREN && currentToken.type != TokenType.EOF) {
-            elements.add(parse());
-        }
-        return new ListNode(elements);
-    }
 
     private ASTNode parseMapNode() {
         consume(TokenType.LBRACE);
-        Map<String,ASTNode> keyMap = new HashMap<>();
-        String key;
+        Map<String, ASTNode> keyMap = new HashMap<>();
         while (currentToken.type != TokenType.RBRACE && currentToken.type != TokenType.EOF) {
-                if (currentToken.type == TokenType.COLON) {
-                    advance();
-                    AtomNode atomNode = parseIfAtom();
-                    advance();
-                    key = atomNode.value;
-                    ASTNode data = parse();
-                    if (key == null) throw new RuntimeException("Key or value is missing");
-                    keyMap.put(key, data);
-                }
-                else {
-                    throw new RuntimeException("a map must require a proper :key "+currentToken);
-                }
+            if (currentToken.type == TokenType.COLON) {
+                advance();
+                AtomNode atomNode = parseIfAtom();
+                advance();
+                ASTNode data = parse();
+                if (atomNode.getValue() == null) throw new RuntimeException("Key or value is missing");
+                keyMap.put(atomNode.getValue(), data);
+            } else {
+                throw new RuntimeException("a map must require a proper :key " + currentToken);
+            }
 
         }
         consume(TokenType.RBRACE);
@@ -141,7 +135,18 @@ public class Parser {
             case STRING:
                 yield new AtomNode(TokenType.STRING, token.value);
             case SYMBOL:
-                yield new AtomNode(TokenType.SYMBOL, token.value);
+                // symbol[:key]
+                if(currentToken.type == TokenType.LLIST)
+                {
+                    advance();
+                    List<ASTNode> elements = new ArrayList<>();
+                    while (currentToken.type != TokenType.RLIST && currentToken.type != TokenType.EOF) {
+                        elements.add(parse());
+                    }
+                    consume(TokenType.RLIST); // eat `[`
+                    yield new ListAccessNode(token.value,new DataListNode(elements));
+                }
+                yield new AtomNode(TokenType.SYMBOL,token.value);
             case BOOLEAN:
                 yield new AtomNode(TokenType.BOOLEAN, token.value);
             default:
@@ -170,7 +175,8 @@ public class Parser {
         }
         currentToken = lexer.nextToken();
     }
-    private void advance(){
+
+    private void advance() {
         currentToken = lexer.nextToken();
     }
 
