@@ -1,20 +1,13 @@
 package org.intense.ast;
 
 import org.intense.SymbolTable;
-import org.intense.TokenType;
 
-class AtomNode(TokenType: TokenType, value: String) : ASTNode() {
-    var type:TokenType?=null
-    var value:String? = null
-
-
-    override fun toString():String {
-        return type.toString()+"(" + value + ")";
-
-    }
+class FunNode(atom: AtomNode, DataListNode: DataListNode) : ASTNode() {
+    var body:DataListNode? = null
+    var name:AtomNode? = null
 
     override fun inferType(env: SymbolTable): Type {
-        TODO("Not yet implemented")
+        return IntType()
     }
 
     override fun toKotlinCode(env: SymbolTable): String {

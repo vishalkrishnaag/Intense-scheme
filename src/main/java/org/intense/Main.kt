@@ -1,61 +1,36 @@
 package org.intense;
 import org.intense.ast.ASTNode;
-import org.intense.ast.Interpreter;
+import org.intense.ast.Compiler;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
 
-public class Main {
-    public static void main(String[] args) {
-        if (args.length > 0) {
-            // File mode
-            try {
-                String content = new String(Files.readAllBytes(Paths.get(args[0])));
-                Lexer lexer = new Lexer(content);
-                Parser parser = new Parser(lexer);
-                List<ASTNode> astNodes = parser.getParseTree();
-                SymbolTable environment = new SymbolTable(null);
-                Interpreter interpreter = new Interpreter(environment);
-                interpreter.run(astNodes);
+fun main(args: Array<String>) {
+    if (args.isNotEmpty()) {
+        // File mode
+        try {
+            val path = Paths.get(args[0])
+            val content = Files.readString(path)
 
-            } catch (IOException | ExecutionException | InterruptedException e) {
-                System.err.println("Error reading file: " + e.getMessage());
-            }
-        } else {
-            // REPL mode
-            System.out.println("Intense REPL (type 'exit' to quit)");
-            BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-            SymbolTable environment = new SymbolTable(null);
-            while (true) {
-                System.out.print("> ");
-                try {
-                    String input = reader.readLine();
-                    if (input == null || input.equalsIgnoreCase("exit")) {
-                        break;
-                    }
+            val lexer = Lexer(content)
+            val parser = Parser(lexer)
+            val astNodes = parser.parseTree
 
-                    long startTime = System.nanoTime();
-                    Lexer lexer = new Lexer(input);
-                    Parser parser = new Parser(lexer);
-                    List<ASTNode> astNodes = parser.getParseTree();
-                    Interpreter interpreter = new Interpreter(environment);
-                    interpreter.run(astNodes);
-                    long endTime = System.nanoTime();
-                    long durationMicro = (endTime - startTime) / 1_00000;
-                    System.out.println("Time taken: " + durationMicro + " µs");
-                } catch (IOException e) {
-                    System.err.println("Error reading input: " + e.getMessage());
-                } catch (ExecutionException | InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
-            }
+            val environment = SymbolTable(null)
+            val compiler = Compiler(environment)
+
+            compiler.generateKotlinFile(astNodes, content)
+
+        } catch (e: Exception) {
+            System.err.println("Error: ${e.message}")
         }
+    } else {
+        throw Exception("Input file is required")
     }
 }
+
 
 

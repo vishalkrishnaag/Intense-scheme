@@ -1,21 +1,8 @@
 package org.intense;
 
-public class Token {
-    public final TokenType type;
-    public final String value;
-    public final int line;
-    public final int column;
+class Token(var type: TokenType,var value: String, var line: Int, var column: Int) {
 
-
-    public Token(TokenType type, String value, int line, int column) {
-        this.type = type;
-        this.value = value;
-        this.line = line;
-        this.column = column;
-    }
-
-    @Override
-    public String toString() {
+    override fun toString() :String {
         return String.format("Token(%s, \"%s\", line=%d, col=%d)",
                 type, value, line, column);
     }

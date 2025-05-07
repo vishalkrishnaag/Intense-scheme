@@ -18,10 +18,13 @@ public class Lexer {
     static {
         KEYWORDS.put("true", TokenType.BOOLEAN);
         KEYWORDS.put("false", TokenType.BOOLEAN);
-        KEYWORDS.put("def", TokenType.DEF);
+        KEYWORDS.put("var", TokenType.VAR);
+        KEYWORDS.put("val", TokenType.VAL);
+        KEYWORDS.put("fun", TokenType.FUN);
         KEYWORDS.put("if", TokenType.IF);
         KEYWORDS.put("quote", TokenType.QUOTE);
         KEYWORDS.put("this", TokenType.THIS);
+        KEYWORDS.put("self", TokenType.SELF);
         KEYWORDS.put("package", TokenType.PACKAGE);
         KEYWORDS.put("require", TokenType.REQUIERE);
         KEYWORDS.put("while", TokenType.WHILE);
@@ -170,7 +173,7 @@ public class Lexer {
         do {
             token = nextToken();
             tokens.add(token);
-        } while (token.type != TokenType.EOF);
+        } while (token.getType() != TokenType.EOF);
         return tokens;
     }
 }

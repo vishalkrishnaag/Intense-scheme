@@ -2,7 +2,7 @@ package org.intense.ast;
 
 import org.intense.SymbolTable;
 
-class DefNode(atom: AtomNode, DataListNode: DataListNode) : ASTNode() {
+class VarNode(atom: AtomNode, DataListNode: DataListNode) : ASTNode() {
     var body:DataListNode? = null
     var name:AtomNode? = null
 

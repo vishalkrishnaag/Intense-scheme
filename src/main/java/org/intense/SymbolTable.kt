@@ -3,7 +3,7 @@ package org.intense;
 import org.intense.ast.Symbol
 
 
-class SymbolTable(val parent: SymbolTable? = null) {
+class SymbolTable(private val parent: SymbolTable? = null) {
     private val symbols: MutableMap<String, Symbol> = mutableMapOf()
 
     fun define(name: String, symbol: Symbol) {

@@ -1,4 +1,4 @@
 package org.intense.ast;
 
-abstract class Type {}
+abstract class Type
 
