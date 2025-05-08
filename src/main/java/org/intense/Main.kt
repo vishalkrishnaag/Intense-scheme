@@ -22,7 +22,7 @@ fun main(args: Array<String>) {
             val environment = SymbolTable(null)
             val compiler = Compiler(environment)
 
-            compiler.generateKotlinFile(astNodes, content)
+            compiler.generateKotlinFile(astNodes, path.toString())
 
         } catch (e: Exception) {
             System.err.println("Error: ${e.message}")

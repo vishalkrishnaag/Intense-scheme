@@ -3,7 +3,7 @@ package org.intense.ast;
 import org.intense.SymbolTable;
 
 class DataListNode(elements: MutableList<ASTNode>) : ASTNode() {
-    lateinit var elements: List<ASTNode>
+    private var elements: List<ASTNode> = elements
     // often represented as [object1, obj2 , obj3 ...]
 
     override fun inferType(env: SymbolTable): Type {
@@ -11,7 +11,10 @@ class DataListNode(elements: MutableList<ASTNode>) : ASTNode() {
     }
 
     override fun toKotlinCode(env: SymbolTable): String {
-        TODO("Not yet implemented")
+        val code = StringBuilder()
+        for (it in elements)
+         code.append(it.toKotlinCode(env))
+        return code.toString();
     }
 
     override fun eval(env: SymbolTable): String {

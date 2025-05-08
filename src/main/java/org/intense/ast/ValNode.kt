@@ -11,7 +11,7 @@ class ValNode(atom: AtomNode, DataListNode: DataListNode) : ASTNode() {
     }
 
     override fun toKotlinCode(env: SymbolTable): String {
-        TODO("Not yet implemented")
+        return "val "+ name?.toKotlinCode(env) + "= " + body?.toKotlinCode(env)
     }
 
     override fun eval(env: SymbolTable): String {

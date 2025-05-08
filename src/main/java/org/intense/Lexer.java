@@ -29,6 +29,18 @@ public class Lexer {
         KEYWORDS.put("require", TokenType.REQUIERE);
         KEYWORDS.put("while", TokenType.WHILE);
         KEYWORDS.put("for", TokenType.FOR);
+        KEYWORDS.put("null", TokenType.NULL);
+        KEYWORDS.put("String", TokenType.STRING_KEYWORD);
+        KEYWORDS.put("Int", TokenType.INT_KEYWORD);
+        KEYWORDS.put("Double", TokenType.DOUBLE_KEYWORD);
+        KEYWORDS.put("Boolean", TokenType.BOOLEAN_KEYWORD);
+        KEYWORDS.put("Float", TokenType.FLOAT_KEYWORD);
+        KEYWORDS.put("Byte", TokenType.BYTE_KEYWORD);
+        KEYWORDS.put("Short", TokenType.SHORT_KEYWORD);
+        KEYWORDS.put("Long", TokenType.LONG_KEYWORD);
+        KEYWORDS.put("UByte", TokenType.UBYTE_KEYWORD);
+        KEYWORDS.put("ULong", TokenType.ULONG_KEYWORD);
+
     }
 
     public Lexer(String input) {
@@ -113,7 +125,7 @@ public class Lexer {
         while (currentChar != '\0' &&
                 !Character.isWhitespace(currentChar) &&
                 !isTerminator(currentChar) &&
-                currentChar != ':') {
+                currentChar != ':' && currentChar != '?'&& currentChar != '.') {
             sb.append(currentChar);
             advance();
         }
@@ -150,6 +162,8 @@ public class Lexer {
                 case '{': advance(); return new Token(TokenType.LBRACE, "{", startLine, startCol);
                 case '}': advance(); return new Token(TokenType.RBRACE, "}", startLine, startCol);
                 case ':': advance(); return new Token(TokenType.COLON, ":", startLine, startCol);
+                case '?': advance(); return new Token(TokenType.NULLABLE, "?", startLine, startCol);
+                case '.': advance(); return new Token(TokenType.DOT, "?", startLine, startCol);
                 case '"': return readString();
                 case '+': case '-':
                     if (position + 1 < input.length() && Character.isDigit(input.charAt(position + 1))) {

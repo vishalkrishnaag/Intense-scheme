@@ -36,13 +36,6 @@ public class Parser {
                 consume(TokenType.RPAREN); // eat `)`
                 return new DataListNode(elements);
             }
-            case TokenType.COLON -> {
-                advance();
-                AtomNode atom = parseIfAtom();
-                advance();
-                atom.setType(TokenType.MAP_KEY);
-                return atom;
-            }
             case TokenType.REQUIERE -> {
                 advance();
                 Token token = currentToken;
@@ -156,6 +149,34 @@ public class Parser {
                 yield new AtomNode(TokenType.NUMBER, token.getValue());
             case STRING:
                 yield new AtomNode(TokenType.STRING, token.getValue());
+            case DOT:
+                yield new AtomNode(TokenType.DOT,token.getValue());
+            case COLON:
+                yield new AtomNode(TokenType.COLON,token.getValue());
+            case NULL:
+                yield new AtomNode(TokenType.NULL,token.getValue());
+            case NULLABLE:
+                yield new AtomNode(TokenType.NULLABLE,token.getValue());
+            case STRING_KEYWORD:
+                yield new AtomNode(TokenType.STRING_KEYWORD,token.getValue());
+            case INT_KEYWORD:
+                yield new AtomNode( TokenType.INT_KEYWORD,token.getValue());
+            case DOUBLE_KEYWORD:
+                yield new AtomNode( TokenType.DOUBLE_KEYWORD ,token.getValue());
+            case BOOLEAN_KEYWORD:
+                yield new AtomNode( TokenType.BOOLEAN_KEYWORD ,token.getValue());
+            case FLOAT_KEYWORD:
+                yield new AtomNode( TokenType.FLOAT_KEYWORD ,token.getValue());
+            case BYTE_KEYWORD:
+                yield new AtomNode( TokenType.BYTE_KEYWORD ,token.getValue());
+            case SHORT_KEYWORD:
+                yield new AtomNode( TokenType.SHORT_KEYWORD ,token.getValue());
+            case LONG_KEYWORD:
+                yield new AtomNode( TokenType.LONG_KEYWORD ,token.getValue());
+            case UBYTE_KEYWORD:
+                yield new AtomNode( TokenType.UBYTE_KEYWORD ,token.getValue());
+            case ULONG_KEYWORD:
+                yield new AtomNode( TokenType.ULONG_KEYWORD ,token.getValue());
             case SYMBOL:
                 // symbol[:key]
                 if(currentToken.getType() == TokenType.LLIST)
@@ -186,6 +207,34 @@ public class Parser {
                 yield new AtomNode(TokenType.SYMBOL, currentToken.getValue());
             case BOOLEAN:
                 yield new AtomNode(TokenType.BOOLEAN, currentToken.getValue());
+            case COLON:
+                yield new AtomNode(TokenType.COLON,currentToken.getValue());
+            case DOT:
+                yield new AtomNode(TokenType.DOT,currentToken.getValue());
+            case NULL:
+                yield new AtomNode(TokenType.NULL,currentToken.getValue());
+            case NULLABLE:
+                yield new AtomNode(TokenType.NULLABLE,currentToken.getValue());
+            case STRING_KEYWORD:
+                yield new AtomNode(TokenType.STRING_KEYWORD,currentToken.getValue());
+            case INT_KEYWORD:
+                yield new AtomNode( TokenType.INT_KEYWORD,currentToken.getValue());
+            case DOUBLE_KEYWORD:
+                yield new AtomNode( TokenType.DOUBLE_KEYWORD ,currentToken.getValue());
+            case BOOLEAN_KEYWORD:
+                yield new AtomNode( TokenType.BOOLEAN_KEYWORD ,currentToken.getValue());
+            case FLOAT_KEYWORD:
+                yield new AtomNode( TokenType.FLOAT_KEYWORD ,currentToken.getValue());
+            case BYTE_KEYWORD:
+                yield new AtomNode( TokenType.BYTE_KEYWORD ,currentToken.getValue());
+            case SHORT_KEYWORD:
+                yield new AtomNode( TokenType.SHORT_KEYWORD ,currentToken.getValue());
+            case LONG_KEYWORD:
+                yield new AtomNode( TokenType.LONG_KEYWORD ,currentToken.getValue());
+            case UBYTE_KEYWORD:
+                yield new AtomNode( TokenType.UBYTE_KEYWORD ,currentToken.getValue());
+            case ULONG_KEYWORD:
+                yield new AtomNode( TokenType.ULONG_KEYWORD ,currentToken.getValue());
             default:
                 throw new RuntimeException("Unexpected token: " + currentToken);
         };
