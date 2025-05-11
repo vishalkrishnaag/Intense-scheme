@@ -1,7 +1,4 @@
-package org.intense.ast;
-
-import com.sun.org.apache.xalan.internal.xsltc.compiler.util.StringType
-
+package org.intense.Types;
 
 
 class StringType : Type() {

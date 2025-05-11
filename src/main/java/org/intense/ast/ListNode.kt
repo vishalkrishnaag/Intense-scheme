@@ -1,8 +1,9 @@
 package org.intense.ast;
 
 import org.intense.SymbolTable;
+import org.intense.Types.Type
 
-class ListNode(var elements: ASTNode) : ASTNode() {
+class ListNode(private var elements: ASTNode) : ASTNode() {
 
     //    String getExtracted(List<ASTNode> input) {
 //        StringBuilder result = new StringBuilder("( ");
@@ -28,25 +29,8 @@ class ListNode(var elements: ASTNode) : ASTNode() {
     }
 
     override fun toKotlinCode(env: SymbolTable): String {
-        TODO("Not yet implemented")
-    }
-
-    override fun eval(env: SymbolTable): String {
-        //        return if (elements)
-//        {
-//            case DataListNode dl -> dl.eval(env);
-//            case MapNode mp -> mp.eval(env);
-//            case DefNode def -> def.eval(env);
-//            case ListNode listNode -> listNode.eval(env);
-//            case IfConditionNode If -> If.eval(env);
-//            case CallNode callNode -> callNode.eval(env);
-//            case PackageNode packageNode -> packageNode.eval(env);
-//            case RequiredNode required -> required.eval(env);
-//            default -> {
-//            System.err.println("unknown operation found "+ elements);
-//            yield null;
-//        }
-//        };
-        return "";
+        val code = StringBuilder()
+        code.append(elements.toKotlinCode(env))
+        return code.toString()
     }
 }

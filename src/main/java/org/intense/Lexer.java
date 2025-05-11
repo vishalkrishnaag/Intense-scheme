@@ -20,7 +20,8 @@ public class Lexer {
         KEYWORDS.put("false", TokenType.BOOLEAN);
         KEYWORDS.put("var", TokenType.VAR);
         KEYWORDS.put("val", TokenType.VAL);
-        KEYWORDS.put("fun", TokenType.FUN);
+        KEYWORDS.put("def", TokenType.DEF);
+        KEYWORDS.put("using", TokenType.USING);
         KEYWORDS.put("if", TokenType.IF);
         KEYWORDS.put("quote", TokenType.QUOTE);
         KEYWORDS.put("this", TokenType.THIS);
@@ -30,6 +31,8 @@ public class Lexer {
         KEYWORDS.put("while", TokenType.WHILE);
         KEYWORDS.put("for", TokenType.FOR);
         KEYWORDS.put("null", TokenType.NULL);
+        KEYWORDS.put("None", TokenType.NONE);
+        KEYWORDS.put("return", TokenType.RETURN);
         KEYWORDS.put("String", TokenType.STRING_KEYWORD);
         KEYWORDS.put("Int", TokenType.INT_KEYWORD);
         KEYWORDS.put("Double", TokenType.DOUBLE_KEYWORD);
@@ -98,7 +101,7 @@ public class Lexer {
         }
         if (currentChar == '"') {
             advance();
-            return new Token(TokenType.STRING, sb.toString(), startLine, startCol);
+            return new Token(TokenType.STRING,'"' + sb.toString() + '"', startLine, startCol);
         } else {
             throw new RuntimeException("Unterminated string at line " + startLine + ", column " + startCol);
         }

@@ -1,6 +1,7 @@
 package org.intense.ast;
 
 import org.intense.SymbolTable;
+import org.intense.Types.IntType
 
 // list[:key]
 class ListAccessNode(value: String, DataListNode: DataListNode) : ASTNode(){
@@ -10,10 +11,6 @@ class ListAccessNode(value: String, DataListNode: DataListNode) : ASTNode(){
     override fun inferType(env: SymbolTable) = IntType()
 
     override fun toKotlinCode(env: SymbolTable): String {
-        TODO("Not yet implemented")
-    }
-
-    override fun eval(env: SymbolTable): String {
         TODO("Not yet implemented")
     }
 }

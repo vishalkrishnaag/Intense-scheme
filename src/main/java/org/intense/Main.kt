@@ -1,10 +1,6 @@
 package org.intense;
-import org.intense.ast.ASTNode;
-import org.intense.ast.Compiler;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.File
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
@@ -21,8 +17,11 @@ fun main(args: Array<String>) {
 
             val environment = SymbolTable(null)
             val compiler = Compiler(environment)
-
-            compiler.generateKotlinFile(astNodes, path.toString())
+            val newFile = File(
+                path.parent.toFile(),
+                path.fileName.toString().substringBeforeLast('.') + ".kt"
+            )
+            compiler.generateKotlinFile(astNodes,newFile.path)
 
         } catch (e: Exception) {
             System.err.println("Error: ${e.message}")

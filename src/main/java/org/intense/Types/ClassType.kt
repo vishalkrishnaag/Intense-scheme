@@ -1,4 +1,4 @@
-package org.intense.ast
+package org.intense.Types
 
 abstract class ClassType : Type() {
 }

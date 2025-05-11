@@ -1,6 +1,7 @@
 package org.intense.ast;
 
 import org.intense.SymbolTable;
+import org.intense.Types.Type
 
 class MapNode(keyMap: MutableMap<String, ASTNode>) : ASTNode() {
     override fun inferType(env: SymbolTable): Type {
@@ -8,10 +9,6 @@ class MapNode(keyMap: MutableMap<String, ASTNode>) : ASTNode() {
     }
 
     override fun toKotlinCode(env: SymbolTable): String {
-        TODO("Not yet implemented")
-    }
-
-    override fun eval(env: SymbolTable): String {
         TODO("Not yet implemented")
     }
 }

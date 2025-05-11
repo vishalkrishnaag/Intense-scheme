@@ -1,6 +1,7 @@
 package org.intense.ast;
 
 import org.intense.SymbolTable;
+import org.intense.Types.Type
 
 class DataListNode(elements: MutableList<ASTNode>) : ASTNode() {
     private var elements: List<ASTNode> = elements
@@ -15,9 +16,5 @@ class DataListNode(elements: MutableList<ASTNode>) : ASTNode() {
         for (it in elements)
          code.append(it.toKotlinCode(env))
         return code.toString();
-    }
-
-    override fun eval(env: SymbolTable): String {
-        TODO("Not yet implemented")
     }
 }

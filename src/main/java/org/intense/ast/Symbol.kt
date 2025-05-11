@@ -1,5 +1,7 @@
 package org.intense.ast
 
+import org.intense.Types.Type
+
 sealed class Symbol
 
 data class VariableSymbol(val name: String, val type: Type) : Symbol()

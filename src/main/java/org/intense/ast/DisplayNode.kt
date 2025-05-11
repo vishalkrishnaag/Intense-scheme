@@ -1,9 +1,10 @@
 package org.intense.ast;
 
 import org.intense.SymbolTable;
+import org.intense.Types.Type
 
-class DisplayNode : ASTNode() {
-    private var printable: ASTNode? = null;
+class DisplayNode(mPrintable:ASTNode) : ASTNode() {
+    private var printable: ASTNode? = mPrintable
     fun getPrintable() : ASTNode? {
         return printable;
     }
@@ -17,10 +18,6 @@ class DisplayNode : ASTNode() {
     }
 
     override fun toKotlinCode(env: SymbolTable): String {
-        TODO("Not yet implemented")
-    }
-
-    override fun eval(env: SymbolTable): String {
-        TODO("Not yet implemented")
+        return "println "+printable?.toKotlinCode(env)
     }
 }
