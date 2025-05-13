@@ -30,18 +30,34 @@ public class Parser {
             case TokenType.LPAREN -> {
                 advance();
                 List<ASTNode> elements = new ArrayList<>();
-                while (currentToken.getType() != TokenType.RPAREN && currentToken.getType() != TokenType.EOF) {
-                    elements.add(parse());
+                if (currentToken.getType() == TokenType.SYMBOL)
+                {
+                    // method call (x :y 30 :z "some values") or built in
+                   ASTNode callNode= parseCallNode();
+                    consume(TokenType.RPAREN);
+                    return callNode;
                 }
-                consume(TokenType.RPAREN); // eat `)`
-                return new DataListNode(elements);
+                else {
+                    while (currentToken.getType() != TokenType.RPAREN && currentToken.getType() != TokenType.EOF) {
+                        elements.add(parse());
+                    }
+                    consume(TokenType.RPAREN); // eat `)`
+                    return new DataListNode(elements);
+                }
+
             }
-            case TokenType.REQUIERE -> {
+            case TokenType.IMPORT -> {
                 advance();
                 Token token = currentToken;
                 consume(TokenType.STRING);
-                return new ImportNode(token.getValue());
-
+                AtomNode casting_var = null;
+                if(currentToken.getType()==TokenType.AS)
+                {
+                    advance();
+                    casting_var = parseIfAtom();
+                    advance();
+                }
+                return new ImportNode(token.getValue(),casting_var);
             }
             case RETURN -> {
                 advance();
@@ -57,38 +73,21 @@ public class Parser {
                 advance();
                 AtomNode atom = parseIfAtom();
                 List<ASTNode> elements = new ArrayList<>();
-                List<ASTNode> arguments = new ArrayList<>();
+                List<ASTNode> arguments = null;
                 // function name should be a symbol
                 consume(TokenType.SYMBOL);
                 consume(TokenType.COLON);
                 ASTNode dataType = parseAtom();
                 if(currentToken.getType()==TokenType.LPAREN)
                 {
-                    advance();
-                    if(currentToken.getType()==TokenType.USING)
-                    {
-                        advance();
-                        while (currentToken.getType() != TokenType.RPAREN &&
-                                currentToken.getType() != TokenType.EOF) {
-                            AtomNode argAtom = parseIfAtom();
-                            // atom:Type "value"
-                            consume(TokenType.SYMBOL);
-                            consume(TokenType.COLON);
-                            AtomNode argDataType = parseIfAtom();
-                            //todo: convert to general dataType rather than atom
-                            advance();
-                            boolean question = currentToken.getType() == TokenType.NULLABLE;
-                            if (question) {
-                                advance();
-                            }
-                            arguments.add(new DefArgumentNode(argAtom,argDataType,question));
-                        }
-                        consume(TokenType.RPAREN);
-                    }
-                    else {
-                        elements.add(parse());
-                        consume(TokenType.RPAREN);
-                    }
+                   arguments= parseUsing();
+                    consume(TokenType.RPAREN);
+                } else if (currentToken.getType()==TokenType.LLIST) {
+                    arguments=parseUsing();
+                    consume(TokenType.RLIST);
+                }
+                else {
+                    throw new RuntimeException("expected an argument list , if no argument list then [] is expected");
                 }
                 while (currentToken.getType() != TokenType.RPAREN && currentToken.getType() != TokenType.EOF) {
                     elements.add(parse());
@@ -143,19 +142,24 @@ public class Parser {
             }
             case TokenType.LLIST -> {
                 advance();
-                List<ASTNode> elements = new ArrayList<>();
-                while (currentToken.getType() != TokenType.RLIST && currentToken.getType() != TokenType.EOF) {
-                    elements.add(parse());
+                if(currentToken.getType()==TokenType.SYMBOL)
+                {
+                    ASTNode call = parseCallNode();
+                    consume(TokenType.RLIST);
+                    return call;
                 }
-                consume(TokenType.RLIST); // eat `[`
-                return new DataListNode(elements);
+                else {
+                    List<ASTNode> elements = new ArrayList<>();
+                    while (currentToken.getType() != TokenType.RLIST && currentToken.getType() != TokenType.EOF) {
+                        elements.add(parse());
+                    }
+                    consume(TokenType.RLIST); // eat `[`
+                    return new DataListNode(elements);
+                }
+
             }
             case TokenType.LBRACE -> {
                 return parseMapNode();// eat `}`
-            }
-            case TokenType.SYMBOL -> {
-                // method call (x :y 30 :z "some values") or built in
-                return parseCallNode();
             }
             case TokenType.RBRACE -> {
                 throw new RuntimeException("unexpected closing ) or } or ] , got " + currentToken);
@@ -167,6 +171,39 @@ public class Parser {
                 return parseAtom();
             }
         }
+    }
+
+    private List<ASTNode> parseUsing(){
+        List<ASTNode> arguments = new ArrayList<>();
+        advance();
+        if(currentToken.getType()==TokenType.USING)
+        {
+            advance();
+            while (currentToken.getType() != TokenType.RPAREN &&
+                    currentToken.getType() != TokenType.RLIST &&
+                    currentToken.getType() != TokenType.EOF) {
+                AtomNode argAtom = parseIfAtom();
+                // atom:Type "value"
+                consume(TokenType.SYMBOL);
+                consume(TokenType.COLON);
+                AtomNode argDataType = parseIfAtom();
+                //todo: convert to general dataType rather than atom
+                advance();
+                boolean question = currentToken.getType() == TokenType.NULLABLE;
+                if (question) {
+                    advance();
+                }
+                arguments.add(new DefArgumentNode(argAtom,argDataType,question));
+            }
+        } else if (currentToken.getType()==TokenType.RLIST ) {
+            return null;
+        }else if (currentToken.getType()==TokenType.RPAREN ) {
+            return null;
+        }
+        else {
+            throw new RuntimeException("error in function definition expected a ) or ]");
+        }
+        return arguments;
     }
 
     private ASTNode parseCallNode() {

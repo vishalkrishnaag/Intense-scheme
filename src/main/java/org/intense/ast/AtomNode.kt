@@ -3,19 +3,25 @@ package org.intense.ast;
 import org.intense.SymbolTable;
 import org.intense.TokenType;
 import org.intense.Types.*
+import org.intense.TypingTable
 
 class AtomNode(tokenType: TokenType, var value: String) : ASTNode() {
-    var type: TokenType? = tokenType
+    var tokenType: TokenType? = tokenType
 
 
     override fun toString(): String {
-        return type.toString()+ "(" + value + ")";
+        return tokenType.toString()+ "(" + value + ")";
 
     }
 
-    override fun inferType(env: SymbolTable): Type {
+    override fun inferType(type: TypingTable, env: SymbolTable): Type {
         //Todo: symbol needs separate treatment
-        return when (type) {
+        if(tokenType == TokenType.SYMBOL)
+        {
+           val atomic:Symbol = env.lookup(value)
+            return type.lookup(atomic.typeId)
+        }
+        return when (tokenType) {
             TokenType.NUMBER -> IntType()
             TokenType.NONE -> NoneType()
             TokenType.STRING -> StringType()
@@ -42,16 +48,16 @@ class AtomNode(tokenType: TokenType, var value: String) : ASTNode() {
             TokenType.LONG_KEYWORD -> LongType()
             TokenType.UBYTE_KEYWORD -> UByteType()
             TokenType.ULONG_KEYWORD -> ULongType()
-            null -> throw Exception("invalid atomic type")
+            null -> throw Exception("invalid atomic tokenType")
             else -> {
-                throw Exception("invalid atomic type")
+                throw Exception("invalid atomic tokenType")
             }
         }
     }
 
-    override fun toKotlinCode(env: SymbolTable): String {
+    override fun toKotlinCode(type: TypingTable, env: SymbolTable): String {
         println("value is $value")
-        return when (type) {
+        return when (tokenType) {
             TokenType.SYMBOL -> value
             TokenType.NUMBER -> value
             TokenType.NONE -> "Unit"
@@ -85,9 +91,9 @@ class AtomNode(tokenType: TokenType, var value: String) : ASTNode() {
             TokenType.LONG_KEYWORD -> "Long"
             TokenType.UBYTE_KEYWORD -> "UByte"
             TokenType.ULONG_KEYWORD -> "ULong"
-            null -> throw Exception("invalid atomic type")
+            null -> throw Exception("invalid atomic tokenType")
             else -> {
-                throw Exception("invalid atomic type")
+                throw Exception("invalid atomic tokenType")
             }
         }
     }

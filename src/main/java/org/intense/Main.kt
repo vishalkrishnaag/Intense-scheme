@@ -16,7 +16,8 @@ fun main(args: Array<String>) {
             val astNodes = parser.parseTree
 
             val environment = SymbolTable(null)
-            val compiler = Compiler(environment)
+            val typeStore = TypingTable(null)
+            val compiler = Compiler(typeStore,environment)
             val newFile = File(
                 path.parent.toFile(),
                 path.fileName.toString().substringBeforeLast('.') + ".kt"

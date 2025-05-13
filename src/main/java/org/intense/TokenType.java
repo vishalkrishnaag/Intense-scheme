@@ -8,7 +8,7 @@ public enum TokenType {
     STRING, BOOLEAN,
     QUOTE, QUASIQUOTE,
     UNQUOTE, UNQUOTE_SPLICING,
-    REQUIERE,
+    IMPORT,
     COLON, EOF,
     IF, DEF, THIS,
     INT,
@@ -46,5 +46,5 @@ public enum TokenType {
     ULONG_KEYWORD,
     NONE,
     RETURN,
-    USING,
+    USING, CHAIN, AS,
 }

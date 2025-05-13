@@ -2,6 +2,7 @@ package org.intense.ast;
 
 import org.intense.SymbolTable;
 import org.intense.Types.Type
+import org.intense.TypingTable
 
 class VarNode(atom: AtomNode, dataType:AtomNode, dataListNode: DataListNode, question:Boolean) : ASTNode() {
     private var body:DataListNode? = dataListNode
@@ -9,15 +10,15 @@ class VarNode(atom: AtomNode, dataType:AtomNode, dataListNode: DataListNode, que
     private var questionMark:Boolean = question
     private var dataType:AtomNode = dataType
 
-    override fun inferType(env: SymbolTable): Type {
+    override fun inferType(type: TypingTable, env: SymbolTable): Type {
         TODO("Not yet implemented")
     }
 
-    override fun toKotlinCode(env: SymbolTable): String {
+    override fun toKotlinCode(type: TypingTable, env: SymbolTable): String {
         return if(questionMark) {
-            "\nvar "+ name?.value +":"+dataType.value +"? = " + body?.toKotlinCode(env)
+            "\nvar "+ name?.value +":"+dataType.value +"? = " + body?.toKotlinCode(type, env)
         } else {
-            "\nvar "+ name?.value +":"+dataType.value +" = " + body?.toKotlinCode(env)
+            "\nvar "+ name?.value +":"+dataType.value +" = " + body?.toKotlinCode(type, env)
         }
     }
 }

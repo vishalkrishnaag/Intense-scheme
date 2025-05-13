@@ -1,6 +1,6 @@
 package org.intense.Types
 
-abstract class FunctionType : Type() {
-    var paramTypes: List<Type>? = null
-    var returnType: Type? = null
+class FunctionType(arguments: MutableList<Type>, dataType:Type) : Type() {
+    var paramTypes: List<Type>? = arguments
+    var returnType: Type = dataType
 }

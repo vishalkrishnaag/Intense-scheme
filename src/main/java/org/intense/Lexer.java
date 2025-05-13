@@ -22,12 +22,14 @@ public class Lexer {
         KEYWORDS.put("val", TokenType.VAL);
         KEYWORDS.put("def", TokenType.DEF);
         KEYWORDS.put("using", TokenType.USING);
+        KEYWORDS.put("chain", TokenType.CHAIN);
+        KEYWORDS.put("as", TokenType.AS);
         KEYWORDS.put("if", TokenType.IF);
         KEYWORDS.put("quote", TokenType.QUOTE);
         KEYWORDS.put("this", TokenType.THIS);
         KEYWORDS.put("self", TokenType.SELF);
         KEYWORDS.put("package", TokenType.PACKAGE);
-        KEYWORDS.put("require", TokenType.REQUIERE);
+        KEYWORDS.put("import", TokenType.IMPORT);
         KEYWORDS.put("while", TokenType.WHILE);
         KEYWORDS.put("for", TokenType.FOR);
         KEYWORDS.put("null", TokenType.NULL);
