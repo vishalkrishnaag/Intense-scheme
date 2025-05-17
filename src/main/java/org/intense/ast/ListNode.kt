@@ -2,7 +2,6 @@ package org.intense.ast;
 
 import org.intense.SymbolTable;
 import org.intense.Types.Type
-import org.intense.TypingTable
 
 class ListNode(private var elements: ASTNode) : ASTNode() {
 
@@ -25,13 +24,13 @@ class ListNode(private var elements: ASTNode) : ASTNode() {
 //        return result.toString();
 //    }
 
-    override fun inferType(type: TypingTable, env: SymbolTable): Type {
+    override fun inferType(env: SymbolTable): Type {
         TODO("Not yet implemented")
     }
 
-    override fun toKotlinCode(type: TypingTable, env: SymbolTable): String {
+    override fun toKotlinCode(env: SymbolTable): String {
         val code = StringBuilder()
-        code.append(elements.toKotlinCode(type, env))
+        code.append(elements.toKotlinCode(env))
         return code.toString()
     }
 }

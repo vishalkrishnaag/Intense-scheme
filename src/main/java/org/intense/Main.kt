@@ -12,12 +12,10 @@ fun main(args: Array<String>) {
             val content = Files.readString(path)
 
             val lexer = Lexer(content)
-            val parser = Parser(lexer)
-            val astNodes = parser.parseTree
-
             val environment = SymbolTable(null)
-            val typeStore = TypingTable(null)
-            val compiler = Compiler(typeStore,environment)
+            val parser = Parser(lexer,environment)
+            val astNodes = parser.parseTree
+            val compiler = Compiler(environment)
             val newFile = File(
                 path.parent.toFile(),
                 path.fileName.toString().substringBeforeLast('.') + ".kt"

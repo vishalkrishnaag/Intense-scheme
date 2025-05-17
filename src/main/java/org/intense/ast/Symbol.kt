@@ -11,7 +11,8 @@ data class FunctionSymbol(
     var mTypeId:Int
 ) : Symbol(mTypeId)
 
-data class VariableSymbol(val mTypeId: Int) : Symbol(mTypeId)
+data class VarSymbol(val mTypeId: Int) : Symbol(mTypeId)
+data class ValSymbol(val mTypeId: Int) : Symbol(mTypeId)
 
 data class ObjectSymbol(
     val name: String,

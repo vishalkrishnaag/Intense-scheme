@@ -1,12 +1,22 @@
 package org.intense;
 
+import org.intense.Types.Type
 import org.intense.ast.Symbol
 
 
 class SymbolTable(private val parent: SymbolTable? = null) {
     private val symbols: MutableMap<String, Symbol> = mutableMapOf()
+    private val typeStore:TypingTable = TypingTable()
+    fun getTypeStore(): TypingTable {
+        return this.typeStore
+    }
 
     fun define(name: String, symbol: Symbol) {
+        symbols[name] = symbol
+    }
+    fun defineV(name: String, symbol: Symbol,varType: Type) {
+       val typeId:Int = typeStore.define(varType)
+        symbol.typeId = typeId
         symbols[name] = symbol
     }
 

@@ -3,10 +3,10 @@ package org.intense.ast;
 import org.intense.SymbolTable;
 import org.intense.TokenType;
 import org.intense.Types.*
-import org.intense.TypingTable
 
 class AtomNode(tokenType: TokenType, var value: String) : ASTNode() {
-    var tokenType: TokenType? = tokenType
+    private var tokenType: TokenType? = tokenType
+    private var mutability:Boolean = false
 
 
     override fun toString(): String {
@@ -14,18 +14,18 @@ class AtomNode(tokenType: TokenType, var value: String) : ASTNode() {
 
     }
 
-    override fun inferType(type: TypingTable, env: SymbolTable): Type {
+    override fun inferType(env: SymbolTable): Type {
         //Todo: symbol needs separate treatment
         if(tokenType == TokenType.SYMBOL)
         {
            val atomic:Symbol = env.lookup(value)
-            return type.lookup(atomic.typeId)
+            return env.getTypeStore().lookup(atomic.typeId)
         }
         return when (tokenType) {
             TokenType.NUMBER -> IntType()
             TokenType.NONE -> NoneType()
             TokenType.STRING -> StringType()
-            TokenType.BOOLEAN -> BooleanType()
+            TokenType.BOOLEAN -> BooleanType(mutability)
             TokenType.EOF -> throw Exception("code exited with partial execution")
             TokenType.THIS -> ThisNode()
             TokenType.INT -> IntType()
@@ -41,7 +41,7 @@ class AtomNode(tokenType: TokenType, var value: String) : ASTNode() {
             TokenType.STRING_KEYWORD -> ShortType()
             TokenType.INT_KEYWORD -> IntType()
             TokenType.DOUBLE_KEYWORD -> DoubleType()
-            TokenType.BOOLEAN_KEYWORD -> BooleanType()
+            TokenType.BOOLEAN_KEYWORD -> BooleanType(mutability)
             TokenType.FLOAT_KEYWORD -> FloatType()
             TokenType.BYTE_KEYWORD -> ByteType()
             TokenType.SHORT_KEYWORD -> ShortType()
@@ -55,7 +55,7 @@ class AtomNode(tokenType: TokenType, var value: String) : ASTNode() {
         }
     }
 
-    override fun toKotlinCode(type: TypingTable, env: SymbolTable): String {
+    override fun toKotlinCode(env: SymbolTable): String {
         println("value is $value")
         return when (tokenType) {
             TokenType.SYMBOL -> value

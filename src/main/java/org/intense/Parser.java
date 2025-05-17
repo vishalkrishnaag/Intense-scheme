@@ -12,8 +12,10 @@ public class Parser {
     private final List<String> functionDefinitions = new ArrayList<>();
     private Token currentToken;
     private List<ASTNode> nodeList;
+    private SymbolTable env;
 
-    public Parser(Lexer lexer) {
+    public Parser(Lexer lexer,SymbolTable env) {
+        this.env = env;
         this.lexer = lexer;
         this.currentToken = lexer.nextToken();
         this.nodeList = new ArrayList<>();
@@ -92,6 +94,14 @@ public class Parser {
                 while (currentToken.getType() != TokenType.RPAREN && currentToken.getType() != TokenType.EOF) {
                     elements.add(parse());
                 }
+                int index = env.getTypeStore().define(dataType.inferType(env));
+                if(arguments!=null)
+                {
+                    env.define(atom.getValue(),new FunctionSymbol(arguments.size(),index));
+                }
+                else{
+                    env.define(atom.getValue(),new FunctionSymbol(0,index));
+                }
                 return new DefNode(atom,dataType,arguments,elements);
             }
             case TokenType.VAL -> {
@@ -111,6 +121,7 @@ public class Parser {
                         currentToken.getType() != TokenType.EOF) {
                     elements.add(parse());
                 }
+                env.defineV(atom.getValue(),new ValSymbol(0),dataType.inferType(env));
                 return new ValNode(atom, dataType, new DataListNode(elements), question);
             }
             case TokenType.VAR -> {
@@ -130,6 +141,7 @@ public class Parser {
                         currentToken.getType() != TokenType.EOF) {
                     elements.add(parse());
                 }
+                env.defineV(atom.getValue(),new VarSymbol(0),dataType.inferType(env));
                 return new VarNode(atom, dataType, new DataListNode(elements), question);
             }
             case TokenType.IF -> {

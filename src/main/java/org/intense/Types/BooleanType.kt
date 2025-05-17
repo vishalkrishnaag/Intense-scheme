@@ -1,4 +1,5 @@
 package org.intense.Types;
 
-class BooleanType : Type() {
+class BooleanType(mutabl:Boolean) : Type() {
+    private var mutable:Boolean = mutabl
 }

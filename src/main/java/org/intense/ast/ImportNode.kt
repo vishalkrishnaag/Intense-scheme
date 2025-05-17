@@ -29,11 +29,10 @@ class ImportNode(value: String, castingVar: AtomNode?) : ASTNode() {
                         println("executing file: ${file.absolutePath}")
                         val content = Files.readString(file.toPath())
                         val lexer = Lexer(content)
-                        val parser = Parser(lexer)
+                        val parser = Parser(lexer,env)
                         val astNodes = parser.parseTree // assuming Kotlin-style property
-                        val environment = SymbolTable(env)
                         val type = TypingTable()
-                        val interpreter = Compiler(type, environment)
+                        val interpreter = Compiler(env)
                         TODO("need completion")
                     }
 
@@ -58,11 +57,11 @@ class ImportNode(value: String, castingVar: AtomNode?) : ASTNode() {
         }
     }
 
-    override fun inferType(type: TypingTable, env: SymbolTable): Type {
+    override fun inferType(env: SymbolTable): Type {
         TODO("Not callable type check")
     }
 
-    override fun toKotlinCode(type: TypingTable, env: SymbolTable): String {
+    override fun toKotlinCode(env: SymbolTable): String {
         val trimmed: String = if (dependency.startsWith("\"") && dependency.endsWith("\"") && dependency.length >= 2) {
             dependency.substring(1, dependency.length - 1)
         } else {
