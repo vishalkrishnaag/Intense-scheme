@@ -46,5 +46,5 @@ public enum TokenType {
     ULONG_KEYWORD,
     NONE,
     RETURN,
-    USING, CHAIN, AS,
+    USING, CHAIN, AS, ENUM, CLASS, FOREACH, GET,
 }

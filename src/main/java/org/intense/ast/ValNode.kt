@@ -1,6 +1,7 @@
 package org.intense.ast;
 
 import org.intense.SymbolTable;
+import org.intense.Symbols.ValSymbol
 import org.intense.Types.IntType
 import org.intense.Types.Type
 
@@ -15,7 +16,7 @@ class ValNode(atom: AtomNode,MdataType:AtomNode, dataListNode: DataListNode,ques
     }
 
     override fun toKotlinCode(env: SymbolTable): String {
-        env.defineV(name.value,ValSymbol(0),dataType.inferType(env))
+        env.defineV(name.value, ValSymbol(0),dataType.inferType(env))
         if(questionMark)
         {
             return "\nval "+ name?.value +":"+dataType.value +"? = " + body?.toKotlinCode(env)

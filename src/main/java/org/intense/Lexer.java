@@ -19,6 +19,8 @@ public class Lexer {
         KEYWORDS.put("true", TokenType.BOOLEAN);
         KEYWORDS.put("false", TokenType.BOOLEAN);
         KEYWORDS.put("var", TokenType.VAR);
+        KEYWORDS.put("enum", TokenType.ENUM);
+        KEYWORDS.put("class", TokenType.CLASS);
         KEYWORDS.put("val", TokenType.VAL);
         KEYWORDS.put("def", TokenType.DEF);
         KEYWORDS.put("using", TokenType.USING);
@@ -27,11 +29,13 @@ public class Lexer {
         KEYWORDS.put("if", TokenType.IF);
         KEYWORDS.put("quote", TokenType.QUOTE);
         KEYWORDS.put("this", TokenType.THIS);
-        KEYWORDS.put("self", TokenType.SELF);
+        KEYWORDS.put("set!", TokenType.SET);
+        KEYWORDS.put("get!", TokenType.GET);
         KEYWORDS.put("package", TokenType.PACKAGE);
         KEYWORDS.put("import", TokenType.IMPORT);
         KEYWORDS.put("while", TokenType.WHILE);
         KEYWORDS.put("for", TokenType.FOR);
+        KEYWORDS.put("foreach", TokenType.FOREACH);
         KEYWORDS.put("null", TokenType.NULL);
         KEYWORDS.put("None", TokenType.NONE);
         KEYWORDS.put("return", TokenType.RETURN);
@@ -168,7 +172,7 @@ public class Lexer {
                 case '}': advance(); return new Token(TokenType.RBRACE, "}", startLine, startCol);
                 case ':': advance(); return new Token(TokenType.COLON, ":", startLine, startCol);
                 case '?': advance(); return new Token(TokenType.NULLABLE, "?", startLine, startCol);
-                case '.': advance(); return new Token(TokenType.DOT, "?", startLine, startCol);
+                case '.': advance(); return new Token(TokenType.DOT, ".", startLine, startCol);
                 case '"': return readString();
                 case '+': case '-':
                     if (position + 1 < input.length() && Character.isDigit(input.charAt(position + 1))) {

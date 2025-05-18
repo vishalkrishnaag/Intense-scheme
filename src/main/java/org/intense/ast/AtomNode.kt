@@ -1,6 +1,7 @@
 package org.intense.ast;
 
 import org.intense.SymbolTable;
+import org.intense.Symbols.Symbol
 import org.intense.TokenType;
 import org.intense.Types.*
 
@@ -18,7 +19,7 @@ class AtomNode(tokenType: TokenType, var value: String) : ASTNode() {
         //Todo: symbol needs separate treatment
         if(tokenType == TokenType.SYMBOL)
         {
-           val atomic:Symbol = env.lookup(value)
+           val atomic: Symbol = env.lookup(value)
             return env.getTypeStore().lookup(atomic.typeId)
         }
         return when (tokenType) {
@@ -48,7 +49,7 @@ class AtomNode(tokenType: TokenType, var value: String) : ASTNode() {
             TokenType.LONG_KEYWORD -> LongType()
             TokenType.UBYTE_KEYWORD -> UByteType()
             TokenType.ULONG_KEYWORD -> ULongType()
-            null -> throw Exception("invalid atomic tokenType")
+            null -> throw Exception("invalid atomic token Type")
             else -> {
                 throw Exception("invalid atomic tokenType")
             }

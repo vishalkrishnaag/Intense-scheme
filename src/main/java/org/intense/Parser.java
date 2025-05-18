@@ -1,5 +1,8 @@
 package org.intense;
 
+import org.intense.Symbols.FunctionSymbol;
+import org.intense.Symbols.ValSymbol;
+import org.intense.Symbols.VarSymbol;
 import org.intense.ast.*;
 
 import java.util.ArrayList;
@@ -71,6 +74,25 @@ public class Parser {
                 advance();
                return new PackageNode(atomNode.getValue());
             }
+            case SET -> {
+                advance();
+                AtomNode first = parseIfAtom();
+                advance();
+                List<ASTNode> rest = new ArrayList<>();
+                while (currentToken.getType() != TokenType.RPAREN && currentToken.getType() != TokenType.EOF) {
+                    rest.add(parse());
+                }
+                if(rest.isEmpty())
+                {
+                    throw new RuntimeException("(Invalid syntax set assign assignee)");
+                }
+              return new SetNode(first,new DataListNode(rest));
+            }
+            case GET -> {
+                advance();
+                ASTNode first = parseAtom();
+                return new GetNode(first);
+            }
             case TokenType.DEF -> {
                 advance();
                 AtomNode atom = parseIfAtom();
@@ -104,6 +126,26 @@ public class Parser {
                 }
                 return new DefNode(atom,dataType,arguments,elements);
             }
+            case TokenType.CLASS ->{
+                advance(); // eat class
+                List<ASTNode> elements = new ArrayList<>();
+                AtomNode atomNode = parseIfAtom();
+                advance();
+                while (currentToken.getType() != TokenType.RPAREN && currentToken.getType() != TokenType.EOF) {
+                    elements.add(parse());
+                }
+              return new ClassNode(atomNode,elements);
+            }
+            case TokenType.ENUM ->{
+                advance(); // eat enum
+                List<ASTNode> elements = new ArrayList<>();
+               AtomNode atomNode = parseIfAtom();
+                advance();
+                while (currentToken.getType() != TokenType.RPAREN && currentToken.getType() != TokenType.EOF) {
+                    elements.add(parse());
+                }
+                return new EnumNode(atomNode,elements);
+            }
             case TokenType.VAL -> {
                 advance();
                 AtomNode atom = parseIfAtom();
@@ -128,10 +170,14 @@ public class Parser {
                 advance();
                 AtomNode atom = parseIfAtom();
                 // var
+                AtomNode dataType = null;
                 consume(TokenType.SYMBOL);
-                consume(TokenType.COLON);
-                AtomNode dataType = parseIfAtom();
-                advance();
+                if(currentToken.getType() == TokenType.COLON)
+                {
+                    advance();
+                    dataType = parseIfAtom();
+                    advance();
+                }
                 boolean question = currentToken.getType() == TokenType.NULLABLE;
                 if (question) {
                     advance();
@@ -141,8 +187,11 @@ public class Parser {
                         currentToken.getType() != TokenType.EOF) {
                     elements.add(parse());
                 }
-                env.defineV(atom.getValue(),new VarSymbol(0),dataType.inferType(env));
-                return new VarNode(atom, dataType, new DataListNode(elements), question);
+                if(dataType!=null)
+                {
+                    env.defineV(atom.getValue(),new VarSymbol(0),dataType.inferType(env));
+                }
+                return new VarNode(atom,dataType, new DataListNode(elements), question);
             }
             case TokenType.IF -> {
                 advance();
@@ -303,7 +352,21 @@ public class Parser {
                     }
                     consume(TokenType.RLIST); // eat `[`
                     yield new ListAccessNode(token.getValue(), new DataListNode(elements));
+                } else if (currentToken.getType()==TokenType.DOT) {
+                    List<String> elements = new ArrayList<>();
+                    while (currentToken.getType() == TokenType.DOT || currentToken.getType() == TokenType.SYMBOL) {
+                        if(currentToken.getType() == TokenType.DOT)
+                        {
+                            elements.add(".");
+                            advance();
+                        }
+                        elements.add(parseIfAtom().getValue());
+                        advance();
+                    }
+                    yield new LinkingNode(token.getValue(),elements);
                 }
+                // symbol.symbol
+
                 yield new AtomNode(TokenType.SYMBOL, token.getValue());
             case BOOLEAN:
                 yield new AtomNode(TokenType.BOOLEAN, token.getValue());

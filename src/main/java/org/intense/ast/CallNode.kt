@@ -11,9 +11,18 @@ class CallNode(private var operand: ASTNode?, private var is_std: Boolean, priva
     }
 
     override fun toKotlinCode(env: SymbolTable): String {
-        val code: String = operand?.toKotlinCode(env) ?: "no_body"
+        var code: String = operand?.toKotlinCode(env) ?: "no_body"
+        val annotated = if (code[0] == '@') {
+            if (code.contains("-")) {
+                code = "@in10s_" + code.replace("-", "_")
+                    .replace("@","")
+            }
+            true
+        } else {
+            false
+        }
 //        var mType:Type = type.lookup(env.lookup(operand.toString()).typeId)
-        
+
 
         if (is_std) {
             if (params != null) {
@@ -25,30 +34,39 @@ class CallNode(private var operand: ASTNode?, private var is_std: Boolean, priva
                             "add" -> {
                                 " + "
                             }
+
                             "sub" -> {
                                 " - "
                             }
+
                             "mul" -> {
                                 " * "
                             }
+
                             "div" -> {
                                 " / "
                             }
+
                             "mod" -> {
                                 " % "
                             }
+
                             "pow" -> {
                                 " ^ "
                             }
+
                             "greater" -> {
                                 " > "
                             }
+
                             "lesser" -> {
                                 " < "
                             }
+
                             "not" -> {
                                 " ! "
                             }
+
                             else -> {
                                 throw Exception("Invalid operator detected $code")
                             }
@@ -69,17 +87,27 @@ class CallNode(private var operand: ASTNode?, private var is_std: Boolean, priva
         }
         val callCode = StringBuilder()
         if (params!!.isNotEmpty()) {
-            for (it in params!!.indices)
-            {
+            for (it in params!!.indices) {
                 callCode.append(params!![it].toKotlinCode(env))
                 if (it < params!!.lastIndex) {
                     callCode.append(", ")
                 }
             }
 
-            return "\n$code($callCode)"
+            if (annotated) {
+                return "\n$code \n$callCode"
+            } else {
+                return "\n$code($callCode)"
+            }
+
+
         } else {
-            return "\n$code()"
+            if (annotated) {
+                return "\n$code\n"
+            } else {
+                return "\n$code()"
+            }
+
         }
 
     }

@@ -1,6 +1,7 @@
-package org.intense.ast
+package org.intense.Symbols
 
 import org.intense.Types.Type
+import org.intense.ast.ASTNode
 
 sealed class Symbol(mTypeId: Int) {
    var typeId:Int= mTypeId
