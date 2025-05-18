@@ -5,13 +5,13 @@ import org.intense.Types.Type
 
 class DefArgumentNode(
     argAtom: AtomNode,
-    argDataType: AtomNode,
+    argDataType: ASTNode,
     question: Boolean
 ) : ASTNode() {
     /*
     * A single argument like a:Int 100 is captured here */
     private var atom: AtomNode = argAtom
-    private var dataType: AtomNode = argDataType
+    private var dataType: ASTNode = argDataType
     private var questionable: Boolean = question
     override fun inferType(env: SymbolTable): Type {
         return dataType.inferType(env)
@@ -19,9 +19,9 @@ class DefArgumentNode(
 
     override fun toKotlinCode(env: SymbolTable): String {
         return if (questionable) {
-            "${atom.value}:${dataType.value}?"
+            "${atom.value}:${dataType.toKotlinCode(env)}?"
         } else {
-            "${atom.value}:${dataType.value}"
+            "${atom.value}:${dataType.toKotlinCode(env)}"
         }
     }
 }

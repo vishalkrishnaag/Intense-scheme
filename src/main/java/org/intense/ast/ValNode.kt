@@ -1,27 +1,30 @@
 package org.intense.ast;
 
-import org.intense.SymbolTable;
-import org.intense.Symbols.ValSymbol
+import org.intense.SymbolTable
 import org.intense.Types.IntType
 import org.intense.Types.Type
 
-class ValNode(atom: AtomNode,MdataType:AtomNode, dataListNode: DataListNode,question:Boolean) : ASTNode() {
+class ValNode(atom: AtomNode, atomNode:AtomNode?, dataListNode: DataListNode, question:Boolean) : ASTNode() {
     private var body:DataListNode? = dataListNode
     private var name:AtomNode = atom
     private var questionMark:Boolean = question
-    private var dataType:AtomNode = MdataType
+    private var dataType:AtomNode? = atomNode
 
     override fun inferType(env: SymbolTable): Type {
         return IntType()
     }
 
     override fun toKotlinCode(env: SymbolTable): String {
-        env.defineV(name.value, ValSymbol(0),dataType.inferType(env))
-        if(questionMark)
+        if(dataType ==null)
         {
-            return "\nval "+ name?.value +":"+dataType.value +"? = " + body?.toKotlinCode(env)
-        }else{
-            return "\nval "+ name?.value +":"+dataType.value +" = " + body?.toKotlinCode(env)
+            return "\nval "+name.value + " = "+ body?.toKotlinCode(env) + "()\n"
+        }
+        else{
+            return if (questionMark) {
+                "\nval " + name.value + ":" + dataType?.value + "? = " + body?.toKotlinCode(env) + "\n"
+            } else {
+                "\nval " + name.value + ":" + dataType?.value + " = " + body?.toKotlinCode(env) + "\n"
+            }
         }
     }
 }

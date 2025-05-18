@@ -43,6 +43,7 @@ public class Lexer {
         KEYWORDS.put("Int", TokenType.INT_KEYWORD);
         KEYWORDS.put("Double", TokenType.DOUBLE_KEYWORD);
         KEYWORDS.put("Boolean", TokenType.BOOLEAN_KEYWORD);
+        KEYWORDS.put("Any", TokenType.ANY_KEYWORD);
         KEYWORDS.put("Float", TokenType.FLOAT_KEYWORD);
         KEYWORDS.put("Byte", TokenType.BYTE_KEYWORD);
         KEYWORDS.put("Short", TokenType.SHORT_KEYWORD);
@@ -146,7 +147,7 @@ public class Lexer {
 
     private boolean isTerminator(char c) {
         return c == '(' || c == ')' || c == '"' || c == ';' ||
-                c == '[' || c == ']' || c == '{' || c == '}';
+                c == '[' || c == ']' || c == '{' || c == '}' || c== '<' || c == '>' ;
     }
 
     public Token nextToken() {
@@ -172,6 +173,8 @@ public class Lexer {
                 case '}': advance(); return new Token(TokenType.RBRACE, "}", startLine, startCol);
                 case ':': advance(); return new Token(TokenType.COLON, ":", startLine, startCol);
                 case '?': advance(); return new Token(TokenType.NULLABLE, "?", startLine, startCol);
+                case '<': advance(); return new Token(TokenType.LESS_THAN, "<", startLine, startCol);
+                case '>': advance(); return new Token(TokenType.GREATER_THAN, ">", startLine, startCol);
                 case '.': advance(); return new Token(TokenType.DOT, ".", startLine, startCol);
                 case '"': return readString();
                 case '+': case '-':

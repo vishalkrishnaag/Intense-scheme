@@ -40,6 +40,7 @@ class AtomNode(tokenType: TokenType, var value: String) : ASTNode() {
             TokenType.UBYTE -> UByteType()
             TokenType.ULONG -> ULongType()
             TokenType.STRING_KEYWORD -> ShortType()
+            TokenType.ANY_KEYWORD -> AnyType()
             TokenType.INT_KEYWORD -> IntType()
             TokenType.DOUBLE_KEYWORD -> DoubleType()
             TokenType.BOOLEAN_KEYWORD -> BooleanType(mutability)
@@ -73,6 +74,7 @@ class AtomNode(tokenType: TokenType, var value: String) : ASTNode() {
             TokenType.DOUBLE -> value
             TokenType.OBJECT -> value
             TokenType.NULLABLE -> value
+            TokenType.ANY_KEYWORD -> value
             TokenType.ARRAY_INT -> "Int[]"
             TokenType.ARRAY_DOUBLE -> "Double[]"
             TokenType.ARRAY_OBJECT -> "object[]"
@@ -94,7 +96,7 @@ class AtomNode(tokenType: TokenType, var value: String) : ASTNode() {
             TokenType.ULONG_KEYWORD -> "ULong"
             null -> throw Exception("invalid atomic tokenType")
             else -> {
-                throw Exception("invalid atomic tokenType")
+                throw Exception("invalid atomic token Type")
             }
         }
     }

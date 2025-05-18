@@ -1,5 +1,6 @@
 package org.intense;
 
+import com.google.googlejavaformat.Input;
 import org.intense.Symbols.FunctionSymbol;
 import org.intense.Symbols.ValSymbol;
 import org.intense.Symbols.VarSymbol;
@@ -14,8 +15,8 @@ public class Parser {
     private final Lexer lexer;
     private final List<String> functionDefinitions = new ArrayList<>();
     private Token currentToken;
-    private List<ASTNode> nodeList;
-    private SymbolTable env;
+    private final List<ASTNode> nodeList;
+    private final SymbolTable env;
 
     public Parser(Lexer lexer,SymbolTable env) {
         this.env = env;
@@ -73,6 +74,10 @@ public class Parser {
                 AtomNode atomNode = parseIfAtom();
                 advance();
                return new PackageNode(atomNode.getValue());
+            }
+            case WHILE -> {
+                advance();
+               return new WhileConditionNode(parse(),parse());
             }
             case SET -> {
                 advance();
@@ -151,9 +156,13 @@ public class Parser {
                 AtomNode atom = parseIfAtom();
                 // val x:String?
                 consume(TokenType.SYMBOL);
-                consume(TokenType.COLON);
-                AtomNode dataType = parseIfAtom();
-                advance();
+                AtomNode dataType = null;
+                if(currentToken.getType() == TokenType.COLON)
+                {
+                    advance();
+                    dataType = parseIfAtom();
+                    advance();
+                }
                 boolean question = currentToken.getType() == TokenType.NULLABLE;
                 if (question) {
                     advance();
@@ -163,7 +172,9 @@ public class Parser {
                         currentToken.getType() != TokenType.EOF) {
                     elements.add(parse());
                 }
-                env.defineV(atom.getValue(),new ValSymbol(0),dataType.inferType(env));
+                if(dataType!=null) {
+                    env.defineV(atom.getValue(), new ValSymbol(0), dataType.inferType(env));
+                }
                 return new ValNode(atom, dataType, new DataListNode(elements), question);
             }
             case TokenType.VAR -> {
@@ -215,7 +226,7 @@ public class Parser {
                         elements.add(parse());
                     }
                     consume(TokenType.RLIST); // eat `[`
-                    return new DataListNode(elements);
+                    return new SquareListNode(elements);
                 }
 
             }
@@ -247,9 +258,7 @@ public class Parser {
                 // atom:Type "value"
                 consume(TokenType.SYMBOL);
                 consume(TokenType.COLON);
-                AtomNode argDataType = parseIfAtom();
-                //todo: convert to general dataType rather than atom
-                advance();
+                ASTNode argDataType = parseAtom();
                 boolean question = currentToken.getType() == TokenType.NULLABLE;
                 if (question) {
                     advance();
@@ -265,6 +274,27 @@ public class Parser {
             throw new RuntimeException("error in function definition expected a ) or ]");
         }
         return arguments;
+    }
+
+    private DataTypeNode parseDataTypes() {
+        // type <xyz | p q r s >
+        advance(); // eat `<`
+        List<ASTNode> values = new ArrayList<>();
+            int Count =1;
+            while (Count != 0) {
+                if(currentToken.getType() == TokenType.LESS_THAN) {
+                    Count++;
+                    values.add(parseDataTypes());
+                }
+                else if(currentToken.getType() == TokenType.GREATER_THAN) {
+                    Count--;
+                    advance();
+                }
+                else {
+                    values.add(parseAtom());
+                }
+            }
+        return new DataTypeNode(values);
     }
 
     private ASTNode parseCallNode() {
@@ -322,6 +352,8 @@ public class Parser {
                 yield new AtomNode(TokenType.NULL, token.getValue());
             case NULLABLE:
                 yield new AtomNode(TokenType.NULLABLE, token.getValue());
+            case ANY_KEYWORD:
+                yield new AtomNode(TokenType.ANY_KEYWORD,token.getValue());
             case STRING_KEYWORD:
                 yield new AtomNode(TokenType.STRING_KEYWORD, token.getValue());
             case INT_KEYWORD:
@@ -353,6 +385,7 @@ public class Parser {
                     consume(TokenType.RLIST); // eat `[`
                     yield new ListAccessNode(token.getValue(), new DataListNode(elements));
                 } else if (currentToken.getType()==TokenType.DOT) {
+                    // symbol.symbol
                     List<String> elements = new ArrayList<>();
                     while (currentToken.getType() == TokenType.DOT || currentToken.getType() == TokenType.SYMBOL) {
                         if(currentToken.getType() == TokenType.DOT)
@@ -364,8 +397,9 @@ public class Parser {
                         advance();
                     }
                     yield new LinkingNode(token.getValue(),elements);
+                } else if (currentToken.getType()==TokenType.LESS_THAN) {
+                   yield new CustomDataTypeNode(token.getValue(),parseDataTypes());
                 }
-                // symbol.symbol
 
                 yield new AtomNode(TokenType.SYMBOL, token.getValue());
             case BOOLEAN:
@@ -391,6 +425,7 @@ public class Parser {
             case DOT -> new AtomNode(TokenType.DOT, currentToken.getValue());
             case NULL -> new AtomNode(TokenType.NULL, currentToken.getValue());
             case NULLABLE -> new AtomNode(TokenType.NULLABLE, currentToken.getValue());
+            case ANY_KEYWORD -> new AtomNode(TokenType.ANY_KEYWORD, currentToken.getValue());
             case STRING_KEYWORD -> new AtomNode(TokenType.STRING_KEYWORD, currentToken.getValue());
             case INT_KEYWORD -> new AtomNode(TokenType.INT_KEYWORD, currentToken.getValue());
             case DOUBLE_KEYWORD -> new AtomNode(TokenType.DOUBLE_KEYWORD, currentToken.getValue());
