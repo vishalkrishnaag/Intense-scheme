@@ -20,7 +20,8 @@ class AtomNode(tokenType: TokenType, var value: String) : ASTNode() {
         if(tokenType == TokenType.SYMBOL)
         {
            val atomic: Symbol = env.lookup(value)
-            return env.getTypeStore().lookup(atomic.typeId)
+            println("fish is cooking here ...")
+            return atomic.type
         }
         return when (tokenType) {
             TokenType.NUMBER -> IntType()

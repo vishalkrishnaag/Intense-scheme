@@ -10,7 +10,7 @@ class EnumNode(atom: AtomNode, dataListNode: MutableList<ASTNode>) : ASTNode() {
 
     override fun inferType(env: SymbolTable): Type {
       val atomic: Symbol = env.lookup(name.value)
-      return env.getTypeStore().lookup(atomic.typeId)
+      return atomic.type
     }
 
     override fun toKotlinCode(env: SymbolTable): String {

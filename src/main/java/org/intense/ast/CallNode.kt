@@ -21,7 +21,7 @@ class CallNode(private var operand: ASTNode?, private var is_std: Boolean, priva
         } else {
             false
         }
-//        var mType:Type = type.lookup(env.lookup(operand.toString()).typeId)
+//        var mType:Type = type.lookup(env.lookup(operand.toString()).type)
 
 
         if (is_std) {

@@ -1,6 +1,9 @@
 package org.intense.ast;
 
-import org.intense.*
+import org.intense.Compiler
+import org.intense.Lexer
+import org.intense.Parser
+import org.intense.SymbolTable
 import org.intense.Types.Type
 import java.io.IOException
 import java.nio.file.Files
@@ -31,7 +34,6 @@ class ImportNode(value: String, castingVar: AtomNode?) : ASTNode() {
                         val lexer = Lexer(content)
                         val parser = Parser(lexer,env)
                         val astNodes = parser.parseTree // assuming Kotlin-style property
-                        val type = TypingTable()
                         val interpreter = Compiler(env)
                         TODO("need completion")
                     }

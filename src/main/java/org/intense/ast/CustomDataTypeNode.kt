@@ -1,6 +1,7 @@
 package org.intense.ast;
 
 import org.intense.SymbolTable
+import org.intense.Types.CustomDataType
 import org.intense.Types.Type
 
 // key<x<y>> types
@@ -9,7 +10,7 @@ class CustomDataTypeNode(value: String, dataListNode: DataTypeNode) : ASTNode() 
     var list: DataTypeNode = dataListNode
 
     override fun inferType(env: SymbolTable): Type {
-        TODO("not yet implemented")
+        return CustomDataType()
     }
 
     override fun toKotlinCode(env: SymbolTable): String {

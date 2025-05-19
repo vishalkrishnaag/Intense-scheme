@@ -6,14 +6,16 @@ import org.intense.Types.Type
 
 class DefNode(
     atom: AtomNode,
-    defDataType: ASTNode,
-    defArguments: MutableList<ASTNode>? = null,
-    dataListNode: MutableList<ASTNode>
+    returnType: ASTNode,
+    defArguments: MutableList<DefArgumentNode>? = null,
+    dataListNode: MutableList<ASTNode>,
+    questions : Boolean
 ) : ASTNode() {
     private var body: MutableList<ASTNode> = dataListNode
     private var name: AtomNode = atom
-    private var dataType = defDataType
-    private var arguments:List<ASTNode>? = defArguments
+    private var dataType = returnType
+    private var arguments:List<DefArgumentNode>? = defArguments
+    private var question:Boolean = questions
 
     override fun inferType(env: SymbolTable): Type {
         val argTypes = mutableListOf<Type>()
@@ -38,7 +40,14 @@ class DefNode(
                 }
 
             }
-            code.append("(${args}) :" + dataType.toKotlinCode(env) + "{\n\t")
+            if(question)
+            {
+                code.append("(${args}) :" + dataType.toKotlinCode(env) + "? {\n\t")
+            }
+                else{
+                code.append("(${args}) :" + dataType.toKotlinCode(env) + "{\n\t")
+            }
+
         } else {
             code.append("() :" + dataType.toKotlinCode(env) + "{\n\t")
         }

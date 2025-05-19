@@ -1,9 +1,13 @@
 package org.intense;
 
 import com.google.googlejavaformat.Input;
+import org.intense.Symbols.ClassSymbol;
 import org.intense.Symbols.FunctionSymbol;
 import org.intense.Symbols.ValSymbol;
 import org.intense.Symbols.VarSymbol;
+import org.intense.Types.CustomDataType;
+import org.intense.Types.GenericType;
+import org.intense.Types.Type;
 import org.intense.ast.*;
 
 import java.util.ArrayList;
@@ -17,6 +21,10 @@ public class Parser {
     private Token currentToken;
     private final List<ASTNode> nodeList;
     private final SymbolTable env;
+    private Map<String, Type> FieldList =new HashMap<>();
+    private Map<String, FunctionSymbol> methodList=new HashMap<>();
+    private boolean classEnabled=false;
+    private boolean returnEnabled=false;
 
     public Parser(Lexer lexer,SymbolTable env) {
         this.env = env;
@@ -29,6 +37,13 @@ public class Parser {
                 this.nodeList.add(input);
         }
 
+    }
+
+    private void throwClassNotEnabled(){
+        if(!classEnabled)
+        {
+            throw new RuntimeException(currentToken+" is only allowed inside a class");
+        }
     }
 
     public ASTNode parse() {
@@ -67,6 +82,7 @@ public class Parser {
             }
             case RETURN -> {
                 advance();
+                returnEnabled = true;
                 return new ReturnNode(parse());
             }
             case PACKAGE -> {
@@ -76,10 +92,12 @@ public class Parser {
                return new PackageNode(atomNode.getValue());
             }
             case WHILE -> {
+                throwClassNotEnabled();
                 advance();
                return new WhileConditionNode(parse(),parse());
             }
             case SET -> {
+                throwClassNotEnabled();
                 advance();
                 AtomNode first = parseIfAtom();
                 advance();
@@ -94,19 +112,26 @@ public class Parser {
               return new SetNode(first,new DataListNode(rest));
             }
             case GET -> {
+                throwClassNotEnabled();
                 advance();
                 ASTNode first = parseAtom();
                 return new GetNode(first);
             }
             case TokenType.DEF -> {
+                returnEnabled = false;
+                throwClassNotEnabled();
                 advance();
                 AtomNode atom = parseIfAtom();
                 List<ASTNode> elements = new ArrayList<>();
-                List<ASTNode> arguments = null;
+                List<DefArgumentNode> arguments = null;
                 // function name should be a symbol
                 consume(TokenType.SYMBOL);
                 consume(TokenType.COLON);
                 ASTNode dataType = parseAtom();
+                boolean question = currentToken.getType() == TokenType.NULLABLE;
+                if (question) {
+                    advance();
+                }
                 if(currentToken.getType()==TokenType.LPAREN)
                 {
                    arguments= parseUsing();
@@ -121,17 +146,22 @@ public class Parser {
                 while (currentToken.getType() != TokenType.RPAREN && currentToken.getType() != TokenType.EOF) {
                     elements.add(parse());
                 }
-                int index = env.getTypeStore().define(dataType.inferType(env));
                 if(arguments!=null)
                 {
-                    env.define(atom.getValue(),new FunctionSymbol(arguments.size(),index));
+                    env.define(atom.getValue(),new FunctionSymbol(arguments.size(),new GenericType()));
                 }
                 else{
-                    env.define(atom.getValue(),new FunctionSymbol(0,index));
+                    env.define(atom.getValue(),new FunctionSymbol(0,new GenericType()));
                 }
-                return new DefNode(atom,dataType,arguments,elements);
+                if(question && !returnEnabled)
+                {
+                    throw new RuntimeException("a return statement is expected in method "+atom.getValue());
+                }
+                returnEnabled = false;
+                return new DefNode(atom,dataType,arguments,elements,question);
             }
             case TokenType.CLASS ->{
+                classEnabled = true;
                 advance(); // eat class
                 List<ASTNode> elements = new ArrayList<>();
                 AtomNode atomNode = parseIfAtom();
@@ -139,6 +169,7 @@ public class Parser {
                 while (currentToken.getType() != TokenType.RPAREN && currentToken.getType() != TokenType.EOF) {
                     elements.add(parse());
                 }
+                env.define(atomNode.getValue(),new  ClassSymbol(atomNode.getValue(),null,FieldList,methodList,new GenericType()));
               return new ClassNode(atomNode,elements);
             }
             case TokenType.ENUM ->{
@@ -152,6 +183,7 @@ public class Parser {
                 return new EnumNode(atomNode,elements);
             }
             case TokenType.VAL -> {
+                throwClassNotEnabled();
                 advance();
                 AtomNode atom = parseIfAtom();
                 // val x:String?
@@ -173,11 +205,12 @@ public class Parser {
                     elements.add(parse());
                 }
                 if(dataType!=null) {
-                    env.defineV(atom.getValue(), new ValSymbol(0), dataType.inferType(env));
+                    env.defineV(atom.getValue(), new ValSymbol(new CustomDataType()));
                 }
                 return new ValNode(atom, dataType, new DataListNode(elements), question);
             }
             case TokenType.VAR -> {
+                throwClassNotEnabled();
                 advance();
                 AtomNode atom = parseIfAtom();
                 // var
@@ -200,11 +233,12 @@ public class Parser {
                 }
                 if(dataType!=null)
                 {
-                    env.defineV(atom.getValue(),new VarSymbol(0),dataType.inferType(env));
+                    env.defineV(atom.getValue(),new VarSymbol(new CustomDataType()));
                 }
                 return new VarNode(atom,dataType, new DataListNode(elements), question);
             }
             case TokenType.IF -> {
+                throwClassNotEnabled();
                 advance();
                 // function name should be a symbol
                 ASTNode ifExpr = parse();
@@ -245,8 +279,8 @@ public class Parser {
         }
     }
 
-    private List<ASTNode> parseUsing(){
-        List<ASTNode> arguments = new ArrayList<>();
+    private List<DefArgumentNode> parseUsing(){
+        List<DefArgumentNode> arguments = new ArrayList<>();
         advance();
         if(currentToken.getType()==TokenType.USING)
         {
