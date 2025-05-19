@@ -32,6 +32,10 @@ public class Parser {
         this.currentToken = lexer.nextToken();
         this.nodeList = new ArrayList<>();
         while (currentToken.getType() != TokenType.EOF) {
+            if(currentToken.getType()==TokenType.RPAREN)
+            {
+                throw new RuntimeException("An extra closing bracket found ...");
+            }
             ASTNode input = this.parse();
             if (input != null)
                 this.nodeList.add(input);
@@ -42,7 +46,7 @@ public class Parser {
     private void throwClassNotEnabled(){
         if(!classEnabled)
         {
-            throw new RuntimeException(currentToken+" is only allowed inside a class");
+            throw new RuntimeException(currentToken.getValue()+" is only allowed inside a class");
         }
     }
 
@@ -188,12 +192,11 @@ public class Parser {
                 AtomNode atom = parseIfAtom();
                 // val x:String?
                 consume(TokenType.SYMBOL);
-                AtomNode dataType = null;
+                ASTNode dataType = null;
                 if(currentToken.getType() == TokenType.COLON)
                 {
                     advance();
-                    dataType = parseIfAtom();
-                    advance();
+                    dataType = parseAtom();
                 }
                 boolean question = currentToken.getType() == TokenType.NULLABLE;
                 if (question) {
@@ -214,13 +217,12 @@ public class Parser {
                 advance();
                 AtomNode atom = parseIfAtom();
                 // var
-                AtomNode dataType = null;
+                ASTNode dataType = null;
                 consume(TokenType.SYMBOL);
                 if(currentToken.getType() == TokenType.COLON)
                 {
                     advance();
-                    dataType = parseIfAtom();
-                    advance();
+                    dataType = parseAtom();
                 }
                 boolean question = currentToken.getType() == TokenType.NULLABLE;
                 if (question) {

@@ -6,14 +6,14 @@ import org.intense.Types.Type
 
 class VarNode(
     atom: AtomNode,
-    mDataType: AtomNode?,
+    mDataType: ASTNode?,
     dataListNode: DataListNode,
     question: Boolean
 ) : ASTNode() {
     private var body: DataListNode? = dataListNode
     private var name: AtomNode = atom
     private var questionMark: Boolean = question
-    private var dataType: AtomNode? = mDataType
+    private var dataType: ASTNode? = mDataType
 
     override fun inferType(env: SymbolTable): Type {
         val atomic: Symbol = env.lookup(name.value)
@@ -27,9 +27,17 @@ class VarNode(
         }
         else{
             return if (questionMark) {
-                "\nvar " + name.value + ":" + dataType?.value + "? = " + body?.toKotlinCode(env) + "\n"
+                if (dataType == null) {
+                    throw Exception("invalid syntax ? is added without any data type")
+                }
+                "\nvar " + name.value + ":" + dataType?.toKotlinCode(env) + "? = " + body?.toKotlinCode(env) + "\n"
             } else {
-                "\nvar " + name.value + ":" + dataType?.value + " = " + body?.toKotlinCode(env) + "\n"
+                if (dataType == null) {
+                    "\nvar " + name.value +  " = " + body?.toKotlinCode(env) + "\n"
+                }else{
+                    "\nvar " + name.value + ":" + dataType?.toKotlinCode(env) + " = " + body?.toKotlinCode(env) + "\n"
+                }
+
             }
         }
     }
