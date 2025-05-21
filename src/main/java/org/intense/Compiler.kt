@@ -1,7 +1,6 @@
 package org.intense;
 
 import com.facebook.ktfmt.format.Formatter
-import org.intense.Types.GenericType
 import org.intense.ast.ASTNode
 import java.io.File
 
@@ -13,7 +12,6 @@ class Compiler(private var environment: SymbolTable) {
 
     fun generateKotlinFile(astNodes: List<ASTNode>, outputPath: String) {
         val codeBuilder = StringBuilder()
-        val types = GenericType()
 
         for (node in astNodes) {
             println("evaluating $node")

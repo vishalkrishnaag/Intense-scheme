@@ -20,6 +20,7 @@ class LinkingNode(instanceValue: String, element: MutableList<String>) : ASTNode
         if (elements.isNotEmpty()) {
             for (it in elements)
             {
+                //todo: add validation for class.objects
                 output.append(it)
             }
         }

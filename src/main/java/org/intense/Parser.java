@@ -25,6 +25,8 @@ public class Parser {
     private Map<String, FunctionSymbol> methodList=new HashMap<>();
     private boolean classEnabled=false;
     private boolean returnEnabled=false;
+    // false means field true means inside a method or if else cond
+    private boolean variableScopeIsLocal =false;
 
     public Parser(Lexer lexer,SymbolTable env) {
         this.env = env;
@@ -123,6 +125,7 @@ public class Parser {
             }
             case TokenType.DEF -> {
                 returnEnabled = false;
+                variableScopeIsLocal = true;
                 throwClassNotEnabled();
                 advance();
                 AtomNode atom = parseIfAtom();
@@ -162,6 +165,7 @@ public class Parser {
                     throw new RuntimeException("a return statement is expected in method "+atom.getValue());
                 }
                 returnEnabled = false;
+                variableScopeIsLocal =false;
                 return new DefNode(atom,dataType,arguments,elements,question);
             }
             case TokenType.CLASS ->{
@@ -208,7 +212,7 @@ public class Parser {
                     elements.add(parse());
                 }
                 if(dataType!=null) {
-                    env.defineV(atom.getValue(), new ValSymbol(new CustomDataType()));
+                    env.defineV(atom.getValue(), new ValSymbol(new CustomDataType(),variableScopeIsLocal));
                 }
                 return new ValNode(atom, dataType, new DataListNode(elements), question);
             }
@@ -235,7 +239,7 @@ public class Parser {
                 }
                 if(dataType!=null)
                 {
-                    env.defineV(atom.getValue(),new VarSymbol(new CustomDataType()));
+                    env.defineV(atom.getValue(),new VarSymbol(new CustomDataType(),variableScopeIsLocal));
                 }
                 return new VarNode(atom,dataType, new DataListNode(elements), question);
             }
@@ -335,16 +339,12 @@ public class Parser {
 
     private ASTNode parseCallNode() {
         ASTNode first = parseAtom();
-        boolean is_std = (currentToken.getType() == TokenType.NULLABLE);
-        if (is_std) {
-            advance();
-        }
         List<ASTNode> rest = new ArrayList<>();
         while (currentToken.getType() != TokenType.RPAREN && currentToken.getType() != TokenType.EOF) {
             rest.add(parse());
         }
 
-        return new CallNode(first, is_std, rest);
+        return new CallNode(first,rest);
     }
 
 
