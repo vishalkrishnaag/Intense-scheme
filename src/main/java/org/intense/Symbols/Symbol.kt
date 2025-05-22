@@ -16,6 +16,11 @@ data class FunctionSymbol(
     var mType:Type
 ) : Symbol(mType)
 
+data class BuiltInMethodSymbol(
+    val paramCount :Int,
+    var mType:Type
+) : Symbol(mType)
+
 data class VarSymbol(val mType: Type,val _scope:Boolean=false) : Symbol(mType,_scope)
 data class ValSymbol(val mType: Type,val _scope:Boolean=true) : Symbol(mType,_scope)
 

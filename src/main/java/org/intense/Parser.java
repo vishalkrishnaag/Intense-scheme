@@ -7,6 +7,7 @@ import org.intense.Symbols.ValSymbol;
 import org.intense.Symbols.VarSymbol;
 import org.intense.Types.CustomDataType;
 import org.intense.Types.GenericType;
+import org.intense.Types.NoneType;
 import org.intense.Types.Type;
 import org.intense.ast.*;
 
@@ -159,6 +160,11 @@ public class Parser {
                 }
                 else{
                     env.define(atom.getValue(),new FunctionSymbol(0,new GenericType()));
+                }
+
+                if(dataType.inferType(env) instanceof NoneType && returnEnabled && !question)
+                {
+                    throw new RuntimeException("Remove the return statement from method "+atom.getValue()+" because it return None");
                 }
                 if(question && !returnEnabled)
                 {

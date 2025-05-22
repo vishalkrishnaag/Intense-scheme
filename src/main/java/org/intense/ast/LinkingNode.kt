@@ -4,8 +4,8 @@ import org.intense.SymbolTable;
 import org.intense.Types.Type
 
 class LinkingNode(instanceValue: String, element: MutableList<String>) : ASTNode(){
-    var instanceName = instanceValue;
-    var elements: List<String> = element
+    private var instanceName = instanceValue;
+    private var elements: List<String> = element
     /**
      * .b.c tokenType is linking Node
      * primary functions are object life cycles

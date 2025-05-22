@@ -1,6 +1,6 @@
 package org.intense.ast;
 
-import org.intense.SymbolTable;
+import org.intense.SymbolTable
 import org.intense.Types.FunctionType
 import org.intense.Types.Type
 
