@@ -27,6 +27,8 @@ public class Lexer {
         KEYWORDS.put("chain", TokenType.CHAIN);
         KEYWORDS.put("as", TokenType.AS);
         KEYWORDS.put("if", TokenType.IF);
+        KEYWORDS.put("try", TokenType.TRY);
+        KEYWORDS.put("catch", TokenType.CATCH);
         KEYWORDS.put("quote", TokenType.QUOTE);
         KEYWORDS.put("this", TokenType.THIS);
         KEYWORDS.put("set!", TokenType.SET);
@@ -50,6 +52,7 @@ public class Lexer {
         KEYWORDS.put("Long", TokenType.LONG_KEYWORD);
         KEYWORDS.put("UByte", TokenType.UBYTE_KEYWORD);
         KEYWORDS.put("ULong", TokenType.ULONG_KEYWORD);
+        KEYWORDS.put("is", TokenType.IS);
 
     }
 

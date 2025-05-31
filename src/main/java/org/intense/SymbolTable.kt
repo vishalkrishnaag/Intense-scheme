@@ -16,7 +16,7 @@ class SymbolTable(private val parent: SymbolTable? = null) {
     }
 
     fun lookup(name: String): Symbol {
-        if(name in listOf("println","add", "sub", "mul", "div", "mod", "pow", "greater", "lesser", "not"))
+        if(name in listOf("println","add", "sub", "mul", "div", "mod", "pow", "greater", "lesser", "not","MutableList","mutableListOf"))
         {
             // Change generic type to some other types like built in method Type
             return BuiltInMethodSymbol(0,GenericType())

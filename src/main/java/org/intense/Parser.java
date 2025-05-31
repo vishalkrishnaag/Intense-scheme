@@ -22,21 +22,20 @@ public class Parser {
     private Token currentToken;
     private final List<ASTNode> nodeList;
     private final SymbolTable env;
-    private Map<String, Type> FieldList =new HashMap<>();
-    private Map<String, FunctionSymbol> methodList=new HashMap<>();
-    private boolean classEnabled=false;
-    private boolean returnEnabled=false;
+    private Map<String, Type> FieldList = new HashMap<>();
+    private Map<String, FunctionSymbol> methodList = new HashMap<>();
+    private boolean classEnabled = false;
+    private boolean returnEnabled = false;
     // false means field true means inside a method or if else cond
-    private boolean variableScopeIsLocal =false;
+    private boolean variableScopeIsLocal = false;
 
-    public Parser(Lexer lexer,SymbolTable env) {
+    public Parser(Lexer lexer, SymbolTable env) {
         this.env = env;
         this.lexer = lexer;
         this.currentToken = lexer.nextToken();
         this.nodeList = new ArrayList<>();
         while (currentToken.getType() != TokenType.EOF) {
-            if(currentToken.getType()==TokenType.RPAREN)
-            {
+            if (currentToken.getType() == TokenType.RPAREN) {
                 throw new RuntimeException("An extra closing bracket found ...");
             }
             ASTNode input = this.parse();
@@ -46,10 +45,9 @@ public class Parser {
 
     }
 
-    private void throwClassNotEnabled(){
-        if(!classEnabled)
-        {
-            throw new RuntimeException(currentToken.getValue()+" is only allowed inside a class");
+    private void throwClassNotEnabled() {
+        if (!classEnabled) {
+            throw new RuntimeException(currentToken.getValue() + " is only allowed inside a class");
         }
     }
 
@@ -58,14 +56,12 @@ public class Parser {
             case TokenType.LPAREN -> {
                 advance();
                 List<ASTNode> elements = new ArrayList<>();
-                if (currentToken.getType() == TokenType.SYMBOL)
-                {
+                if (currentToken.getType() == TokenType.SYMBOL) {
                     // method call (x :y 30 :z "some values") or built in
-                   ASTNode callNode= parseCallNode();
+                    ASTNode callNode = parseCallNode();
                     consume(TokenType.RPAREN);
                     return callNode;
-                }
-                else {
+                } else {
                     while (currentToken.getType() != TokenType.RPAREN && currentToken.getType() != TokenType.EOF) {
                         elements.add(parse());
                     }
@@ -79,13 +75,12 @@ public class Parser {
                 Token token = currentToken;
                 consume(TokenType.STRING);
                 AtomNode casting_var = null;
-                if(currentToken.getType()==TokenType.AS)
-                {
+                if (currentToken.getType() == TokenType.AS) {
                     advance();
                     casting_var = parseIfAtom();
                     advance();
                 }
-                return new ImportNode(token.getValue(),casting_var);
+                return new ImportNode(token.getValue(), casting_var);
             }
             case RETURN -> {
                 advance();
@@ -96,12 +91,42 @@ public class Parser {
                 advance();
                 AtomNode atomNode = parseIfAtom();
                 advance();
-               return new PackageNode(atomNode.getValue());
+                return new PackageNode(atomNode.getValue());
+            }
+            case TRY -> {
+                advance();
+                ASTNode tryNode = parse();
+                return new TryCatchNode(tryNode);
+            }
+            case CATCH -> {
+                throwClassNotEnabled();
+                advance();
+                AtomNode atom = parseIfAtom();
+                // val x:String?
+                consume(TokenType.SYMBOL);
+                ASTNode dataType = null;
+                if (currentToken.getType() == TokenType.COLON) {
+                    advance();
+                    dataType = parseAtom();
+                }
+//                boolean question = currentToken.getType() == TokenType.NULLABLE;
+//                if (question) {
+//                    advance();
+//                }
+                List<ASTNode> elements = new ArrayList<>();
+                while (currentToken.getType() != TokenType.RPAREN &&
+                        currentToken.getType() != TokenType.EOF) {
+                    elements.add(parse());
+                }
+                if (dataType != null) {
+                    env.defineV(atom.getValue(), new ValSymbol(new CustomDataType(), variableScopeIsLocal));
+                }
+                return new CatchNode(atom, dataType, new DataListNode(elements));
             }
             case WHILE -> {
                 throwClassNotEnabled();
                 advance();
-               return new WhileConditionNode(parse(),parse());
+                return new WhileConditionNode(parse(), parse());
             }
             case SET -> {
                 throwClassNotEnabled();
@@ -112,11 +137,10 @@ public class Parser {
                 while (currentToken.getType() != TokenType.RPAREN && currentToken.getType() != TokenType.EOF) {
                     rest.add(parse());
                 }
-                if(rest.isEmpty())
-                {
+                if (rest.isEmpty()) {
                     throw new RuntimeException("(Invalid syntax set assign assignee)");
                 }
-              return new SetNode(first,new DataListNode(rest));
+                return new SetNode(first, new DataListNode(rest));
             }
             case GET -> {
                 throwClassNotEnabled();
@@ -140,41 +164,35 @@ public class Parser {
                 if (question) {
                     advance();
                 }
-                if(currentToken.getType()==TokenType.LPAREN)
-                {
-                   arguments= parseUsing();
+                if (currentToken.getType() == TokenType.LPAREN) {
+                    arguments = parseUsing();
                     consume(TokenType.RPAREN);
-                } else if (currentToken.getType()==TokenType.LLIST) {
-                    arguments=parseUsing();
+                } else if (currentToken.getType() == TokenType.LLIST) {
+                    arguments = parseUsing();
                     consume(TokenType.RLIST);
-                }
-                else {
+                } else {
                     throw new RuntimeException("expected an argument list , if no argument list then [] is expected");
                 }
                 while (currentToken.getType() != TokenType.RPAREN && currentToken.getType() != TokenType.EOF) {
                     elements.add(parse());
                 }
-                if(arguments!=null)
-                {
-                    env.define(atom.getValue(),new FunctionSymbol(arguments.size(),new GenericType()));
-                }
-                else{
-                    env.define(atom.getValue(),new FunctionSymbol(0,new GenericType()));
+                if (arguments != null) {
+                    env.define(atom.getValue(), new FunctionSymbol(arguments.size(), new GenericType()));
+                } else {
+                    env.define(atom.getValue(), new FunctionSymbol(0, new GenericType()));
                 }
 
-                if(dataType.inferType(env) instanceof NoneType && returnEnabled && !question)
-                {
-                    throw new RuntimeException("Remove the return statement from method "+atom.getValue()+" because it return None");
+                if (dataType.inferType(env) instanceof NoneType && returnEnabled && !question) {
+                    throw new RuntimeException("Remove the return statement from method " + atom.getValue() + " because it return None");
                 }
-                if(question && !returnEnabled)
-                {
-                    throw new RuntimeException("a return statement is expected in method "+atom.getValue());
+                if (question && !returnEnabled) {
+                    throw new RuntimeException("a return statement is expected in method " + atom.getValue());
                 }
                 returnEnabled = false;
-                variableScopeIsLocal =false;
-                return new DefNode(atom,dataType,arguments,elements,question);
+                variableScopeIsLocal = false;
+                return new DefNode(atom, dataType, arguments, elements, question);
             }
-            case TokenType.CLASS ->{
+            case TokenType.CLASS -> {
                 classEnabled = true;
                 advance(); // eat class
                 List<ASTNode> elements = new ArrayList<>();
@@ -183,18 +201,18 @@ public class Parser {
                 while (currentToken.getType() != TokenType.RPAREN && currentToken.getType() != TokenType.EOF) {
                     elements.add(parse());
                 }
-                env.define(atomNode.getValue(),new  ClassSymbol(atomNode.getValue(),null,FieldList,methodList,new GenericType()));
-              return new ClassNode(atomNode,elements);
+                env.define(atomNode.getValue(), new ClassSymbol(atomNode.getValue(), null, FieldList, methodList, new GenericType()));
+                return new ClassNode(atomNode, elements);
             }
-            case TokenType.ENUM ->{
+            case TokenType.ENUM -> {
                 advance(); // eat enum
                 List<ASTNode> elements = new ArrayList<>();
-               AtomNode atomNode = parseIfAtom();
+                AtomNode atomNode = parseIfAtom();
                 advance();
                 while (currentToken.getType() != TokenType.RPAREN && currentToken.getType() != TokenType.EOF) {
                     elements.add(parse());
                 }
-                return new EnumNode(atomNode,elements);
+                return new EnumNode(atomNode, elements);
             }
             case TokenType.VAL -> {
                 throwClassNotEnabled();
@@ -203,8 +221,7 @@ public class Parser {
                 // val x:String?
                 consume(TokenType.SYMBOL);
                 ASTNode dataType = null;
-                if(currentToken.getType() == TokenType.COLON)
-                {
+                if (currentToken.getType() == TokenType.COLON) {
                     advance();
                     dataType = parseAtom();
                 }
@@ -217,8 +234,8 @@ public class Parser {
                         currentToken.getType() != TokenType.EOF) {
                     elements.add(parse());
                 }
-                if(dataType!=null) {
-                    env.defineV(atom.getValue(), new ValSymbol(new CustomDataType(),variableScopeIsLocal));
+                if (dataType != null) {
+                    env.defineV(atom.getValue(), new ValSymbol(new CustomDataType(), variableScopeIsLocal));
                 }
                 return new ValNode(atom, dataType, new DataListNode(elements), question);
             }
@@ -229,8 +246,7 @@ public class Parser {
                 // var
                 ASTNode dataType = null;
                 consume(TokenType.SYMBOL);
-                if(currentToken.getType() == TokenType.COLON)
-                {
+                if (currentToken.getType() == TokenType.COLON) {
                     advance();
                     dataType = parseAtom();
                 }
@@ -243,11 +259,10 @@ public class Parser {
                         currentToken.getType() != TokenType.EOF) {
                     elements.add(parse());
                 }
-                if(dataType!=null)
-                {
-                    env.defineV(atom.getValue(),new VarSymbol(new CustomDataType(),variableScopeIsLocal));
+                if (dataType != null) {
+                    env.defineV(atom.getValue(), new VarSymbol(new CustomDataType(), variableScopeIsLocal));
                 }
-                return new VarNode(atom,dataType, new DataListNode(elements), question);
+                return new VarNode(atom, dataType, new DataListNode(elements), question);
             }
             case TokenType.IF -> {
                 throwClassNotEnabled();
@@ -260,13 +275,11 @@ public class Parser {
             }
             case TokenType.LLIST -> {
                 advance();
-                if(currentToken.getType()==TokenType.SYMBOL)
-                {
+                if (currentToken.getType() == TokenType.SYMBOL) {
                     ASTNode call = parseCallNode();
                     consume(TokenType.RLIST);
                     return call;
-                }
-                else {
+                } else {
                     List<ASTNode> elements = new ArrayList<>();
                     while (currentToken.getType() != TokenType.RLIST && currentToken.getType() != TokenType.EOF) {
                         elements.add(parse());
@@ -285,17 +298,20 @@ public class Parser {
             case TokenType.RPAREN, RLIST -> {
                 return null;
             }
+            case TokenType.IS -> {
+                advance();
+                return new ConnectiveNode("is");
+            }
             default -> {
                 return parseAtom();
             }
         }
     }
 
-    private List<DefArgumentNode> parseUsing(){
+    private List<DefArgumentNode> parseUsing() {
         List<DefArgumentNode> arguments = new ArrayList<>();
         advance();
-        if(currentToken.getType()==TokenType.USING)
-        {
+        if (currentToken.getType() == TokenType.USING) {
             advance();
             while (currentToken.getType() != TokenType.RPAREN &&
                     currentToken.getType() != TokenType.RLIST &&
@@ -309,14 +325,13 @@ public class Parser {
                 if (question) {
                     advance();
                 }
-                arguments.add(new DefArgumentNode(argAtom,argDataType,question));
+                arguments.add(new DefArgumentNode(argAtom, argDataType, question));
             }
-        } else if (currentToken.getType()==TokenType.RLIST ) {
+        } else if (currentToken.getType() == TokenType.RLIST) {
             return null;
-        }else if (currentToken.getType()==TokenType.RPAREN ) {
+        } else if (currentToken.getType() == TokenType.RPAREN) {
             return null;
-        }
-        else {
+        } else {
             throw new RuntimeException("error in function definition expected a ) or ]");
         }
         return arguments;
@@ -326,20 +341,18 @@ public class Parser {
         // type <xyz | p q r s >
         advance(); // eat `<`
         List<ASTNode> values = new ArrayList<>();
-            int Count =1;
-            while (Count != 0) {
-                if(currentToken.getType() == TokenType.LESS_THAN) {
-                    Count++;
-                    values.add(parseDataTypes());
-                }
-                else if(currentToken.getType() == TokenType.GREATER_THAN) {
-                    Count--;
-                    advance();
-                }
-                else {
-                    values.add(parseAtom());
-                }
+        int Count = 1;
+        while (Count != 0) {
+            if (currentToken.getType() == TokenType.LESS_THAN) {
+                Count++;
+                values.add(parseDataTypes());
+            } else if (currentToken.getType() == TokenType.GREATER_THAN) {
+                Count--;
+                advance();
+            } else {
+                values.add(parseAtom());
             }
+        }
         return new DataTypeNode(values);
     }
 
@@ -350,7 +363,7 @@ public class Parser {
             rest.add(parse());
         }
 
-        return new CallNode(first,rest);
+        return new CallNode(first, rest);
     }
 
 
@@ -380,6 +393,21 @@ public class Parser {
         consume(token.getType());
 
         return switch (token.getType()) {
+            case THIS:
+                if (currentToken.getType() == TokenType.DOT) {
+                // symbol.symbol
+                List<String> elements = new ArrayList<>();
+                while (currentToken.getType() == TokenType.DOT || currentToken.getType() == TokenType.SYMBOL) {
+                    if (currentToken.getType() == TokenType.DOT) {
+                        elements.add(".");
+                        advance();
+                    }
+                    elements.add(parseIfAtom().getValue());
+                    advance();
+                }
+                    yield new LinkingNode(token.getValue(), elements);
+            }
+                yield new AtomNode(TokenType.THIS,"this");
             case NUMBER:
                 yield new AtomNode(TokenType.NUMBER, token.getValue());
             case STRING:
@@ -395,7 +423,7 @@ public class Parser {
             case NULLABLE:
                 yield new AtomNode(TokenType.NULLABLE, token.getValue());
             case ANY_KEYWORD:
-                yield new AtomNode(TokenType.ANY_KEYWORD,token.getValue());
+                yield new AtomNode(TokenType.ANY_KEYWORD, token.getValue());
             case STRING_KEYWORD:
                 yield new AtomNode(TokenType.STRING_KEYWORD, token.getValue());
             case INT_KEYWORD:
@@ -426,21 +454,20 @@ public class Parser {
                     }
                     consume(TokenType.RLIST); // eat `[`
                     yield new ListAccessNode(token.getValue(), new DataListNode(elements));
-                } else if (currentToken.getType()==TokenType.DOT) {
+                } else if (currentToken.getType() == TokenType.DOT) {
                     // symbol.symbol
                     List<String> elements = new ArrayList<>();
                     while (currentToken.getType() == TokenType.DOT || currentToken.getType() == TokenType.SYMBOL) {
-                        if(currentToken.getType() == TokenType.DOT)
-                        {
+                        if (currentToken.getType() == TokenType.DOT) {
                             elements.add(".");
                             advance();
                         }
                         elements.add(parseIfAtom().getValue());
                         advance();
                     }
-                    yield new LinkingNode(token.getValue(),elements);
-                } else if (currentToken.getType()==TokenType.LESS_THAN) {
-                   yield new CustomDataTypeNode(token.getValue(),parseDataTypes());
+                    yield new LinkingNode(token.getValue(), elements);
+                } else if (currentToken.getType() == TokenType.LESS_THAN) {
+                    yield new CustomDataTypeNode(token.getValue(), parseDataTypes());
                 }
 
                 yield new AtomNode(TokenType.SYMBOL, token.getValue());
