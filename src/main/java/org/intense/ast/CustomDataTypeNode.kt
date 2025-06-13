@@ -6,7 +6,7 @@ import org.intense.Types.Type
 
 // key<x<y>> types
 class CustomDataTypeNode(value: String, dataListNode: DataTypeNode) : ASTNode() {
-    var key: String = value
+    private var key: String = value
     var list: DataTypeNode = dataListNode
 
     override fun inferType(env: SymbolTable): Type {
