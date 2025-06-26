@@ -1,9 +1,10 @@
 plugins {
     id("java")
     kotlin("jvm") version "2.1.20"
+    `maven-publish`
 }
 
-group = "org.intense"
+group = "org.intenseLang"
 version = "1.0-SNAPSHOT"
 
 repositories {
@@ -20,4 +21,13 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("mavenJava") {
+            from(components["java"])
+            artifactId = "intense-compiler"
+        }
+    }
 }

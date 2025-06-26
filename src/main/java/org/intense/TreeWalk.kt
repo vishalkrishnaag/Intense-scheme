@@ -4,7 +4,7 @@ import com.facebook.ktfmt.format.Formatter
 import org.intense.ast.ASTNode
 import java.io.File
 
-class Compiler(private var environment: SymbolTable) {
+internal class TreeWalk(private var environment: SymbolTable) {
     private fun formatKotlinCode(code: String): String {
         return Formatter.format(code)
     }

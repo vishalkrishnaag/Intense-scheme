@@ -1,6 +1,5 @@
 package org.intense;
 
-import com.google.googlejavaformat.Input;
 import org.intense.Symbols.ClassSymbol;
 import org.intense.Symbols.FunctionSymbol;
 import org.intense.Symbols.ValSymbol;
@@ -194,15 +193,42 @@ public class Parser {
             }
             case TokenType.CLASS -> {
                 classEnabled = true;
+                List<ASTNode> extendBlock = new ArrayList<>();
                 advance(); // eat class
                 List<ASTNode> elements = new ArrayList<>();
                 AtomNode atomNode = parseIfAtom();
                 advance();
+                if(currentToken.getType() == TokenType.LLIST)
+                {
+                    advance();
+                    if(currentToken.getType()==TokenType.EXTENDS)
+                    {
+                        advance();
+                        while (currentToken.getType() != TokenType.RLIST && currentToken.getType() != TokenType.EOF)
+                        {
+                            extendBlock.add(parse());
+                        }
+                    }
+                    consume(TokenType.RLIST);
+                }
+
                 while (currentToken.getType() != TokenType.RPAREN && currentToken.getType() != TokenType.EOF) {
                     elements.add(parse());
                 }
                 env.define(atomNode.getValue(), new ClassSymbol(atomNode.getValue(), null, FieldList, methodList, new GenericType()));
-                return new ClassNode(atomNode, elements);
+                return new ClassNode(atomNode, elements,extendBlock);
+            }
+            case TokenType.INTERFACE -> {
+                advance(); // eat interface
+                List<ASTNode> elements = new ArrayList<>();
+                AtomNode atomNode = parseIfAtom();
+                advance();
+
+                while (currentToken.getType() != TokenType.RPAREN && currentToken.getType() != TokenType.EOF) {
+                    elements.add(parse());
+                }
+                env.define(atomNode.getValue(), new ClassSymbol(atomNode.getValue(), null, FieldList, methodList, new GenericType()));
+                return new InterfaceNode(atomNode, elements);
             }
             case TokenType.ENUM -> {
                 advance(); // eat enum

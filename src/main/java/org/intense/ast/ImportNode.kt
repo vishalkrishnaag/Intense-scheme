@@ -1,6 +1,6 @@
 package org.intense.ast;
 
-import org.intense.Compiler
+import org.intense.TreeWalk
 import org.intense.Lexer
 import org.intense.Parser
 import org.intense.SymbolTable
@@ -34,7 +34,7 @@ class ImportNode(value: String, castingVar: AtomNode?) : ASTNode() {
                         val lexer = Lexer(content)
                         val parser = Parser(lexer,env)
                         val astNodes = parser.parseTree // assuming Kotlin-style property
-                        val interpreter = Compiler(env)
+                        val interpreter = TreeWalk(env)
                         TODO("need completion")
                     }
 
