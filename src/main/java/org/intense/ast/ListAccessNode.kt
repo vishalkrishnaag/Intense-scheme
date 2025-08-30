@@ -1,20 +1,15 @@
 package org.intense.ast;
 
-import org.intense.SymbolTable
-import org.intense.Types.GenericType
-import org.intense.Types.Type
+import org.intense.Env
+import org.intense.Types.Value
 
 // list[:key]
 class ListAccessNode(value: String, dataListNode: DataListNode) : ASTNode(){
     var key:String = value
     var list:ASTNode =dataListNode
 
-    override fun inferType(env: SymbolTable): Type {
-        Exception("invalid Type")
-        return GenericType()
-    }
 
-    override fun toKotlinCode(env: SymbolTable): String {
+    override fun eval(env: Env): Value {
         TODO("Not yet implemented")
     }
 }

@@ -18,18 +18,18 @@ public class Lexer {
     static {
         KEYWORDS.put("true", TokenType.BOOLEAN);
         KEYWORDS.put("false", TokenType.BOOLEAN);
-        KEYWORDS.put("var", TokenType.VAR);
+//        KEYWORDS.put("var", TokenType.VAR);
         KEYWORDS.put("enum", TokenType.ENUM);
         KEYWORDS.put("class", TokenType.CLASS);
         KEYWORDS.put("interface", TokenType.INTERFACE);
-        KEYWORDS.put("val", TokenType.VAL);
+//        KEYWORDS.put("val", TokenType.VAL);
         KEYWORDS.put("def", TokenType.DEF);
         KEYWORDS.put("using", TokenType.USING);
         KEYWORDS.put("chain", TokenType.CHAIN);
         KEYWORDS.put("as", TokenType.AS);
         KEYWORDS.put("if", TokenType.IF);
-        KEYWORDS.put("try", TokenType.TRY);
-        KEYWORDS.put("catch", TokenType.CATCH);
+//        KEYWORDS.put("try", TokenType.TRY);
+//        KEYWORDS.put("catch", TokenType.CATCH);
         KEYWORDS.put("quote", TokenType.QUOTE);
         KEYWORDS.put("this", TokenType.THIS);
         KEYWORDS.put("set!", TokenType.SET);

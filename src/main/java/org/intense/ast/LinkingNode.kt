@@ -1,21 +1,18 @@
 package org.intense.ast;
 
-import org.intense.SymbolTable;
-import org.intense.Types.Type
+import org.intense.Env
+import org.intense.Types.StrVal
+import org.intense.Types.Value
 
-class LinkingNode(instanceValue: String, element: MutableList<String>) : ASTNode(){
+class LinkingNode(instanceValue: String, element: MutableList<ASTNode>) : ASTNode(){
     private var instanceName = instanceValue;
-    private var elements: List<String> = element
+    private var elements: List<ASTNode> = element
     /**
      * .b.c tokenType is linking Node
      * primary functions are object life cycles
      * */
 
-    override fun inferType(env: SymbolTable): Type {
-        TODO("Not yet implemented")
-    }
-
-    override fun toKotlinCode(env: SymbolTable): String {
+    override fun eval(env: Env): Value {
         val output = StringBuilder()
         if (elements.isNotEmpty()) {
             for (it in elements)
@@ -24,6 +21,6 @@ class LinkingNode(instanceValue: String, element: MutableList<String>) : ASTNode
                 output.append(it)
             }
         }
-        return "$instanceName$output"
+        return StrVal("$instanceName.$output")
     }
 }

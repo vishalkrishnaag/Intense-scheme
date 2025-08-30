@@ -11,15 +11,15 @@ public class intenseCompiler {
                 String content = new String(Files.readAllBytes(inputFile.toPath()));
 
                 Lexer lexer = new Lexer(content);
-                SymbolTable environment = new SymbolTable(null);
-                Parser parser = new Parser(lexer, environment);
+                Env environment = new Env(null);
+                Parser parser = new Parser(lexer);
                 var astNodes = parser.getParseTree();
                 TreeWalk treeWalk = new TreeWalk(environment);
 
                 String nameWithoutExtension = getNameWithoutExtension(inputFile.getName());
                 File newFile = new File(outputDir, nameWithoutExtension + ".kt");
 
-                treeWalk.generateKotlinFile(astNodes, newFile.getPath());
+                treeWalk.traverse(astNodes,environment);
 
             } catch (Exception e) {
                 System.err.println("Error: " + e.getMessage());

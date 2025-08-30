@@ -16,6 +16,7 @@
 ;;    (var intensive:String "hello world")
 ;;    (val dongs:Int 32)
 ;;   (return x))
+;; (class vip (def my-function (lambda[](println "vip is written for both human beings and machines"))))
 
 (class Vikram is
 (var my-test-data:String is "hello world")
@@ -23,19 +24,22 @@
  (var my-test-data:String is this.my-test-data)
 ))
 
-(class test is
-  (def racoon:None?
-  (using var1:Any?)
-  (println (add 21 32))
-  (println (Vikram.activity 323))
-  (println var1)
-  (var var2:Vikram? is null)
-  (var my-list:Any is [2123 232 321 321 321])
-  (return null))
+;;(class test
+;;  (def racoon:None?
+;;    (using var1:Any?)
+;;    (println (add 21 32))
+;;    (println (Vikram.activity 323))
+;;    (println var1)
+;;    (var var2:Vikram? is null)
+;;    (var my-list:Any is [2123 232 321 321 321])
+;;    (return null)))
 
   ;; (def main:None [] is null)
 
 
-(def main:None []
- (var test1 test)
- (test1.racoon "raju bhaji hero daa \t hero ")))
+;;  (def main:None []
+;;    (var test1 test)
+;;    (test1.racoon "raju bhaji hero daa \t hero ")
+;;)
+
+; src/test/java/test/test.in

@@ -1,29 +1,26 @@
 package org.intense.ast;
 
-import org.intense.SymbolTable;
-import org.intense.Types.Type
+import org.intense.Env
+import org.intense.Types.UnitVal
+import org.intense.Types.Value
 
 class IfConditionNode(ifExpr: ASTNode, dtifBody: ASTNode, dtelseBody: ASTNode) : ASTNode() {
     private var ifExp: ASTNode = ifExpr
     private var ifBody: ASTNode? = dtifBody
     private var elseBody: ASTNode? = dtelseBody
 
-    override fun inferType(env: SymbolTable): Type {
-        TODO("Not yet implemented")
-    }
-
-    override fun toKotlinCode(env: SymbolTable): String {
+    override fun eval(env: Env): Value {
         val expr: StringBuilder = StringBuilder()
-        expr.append("\nif (" + ifExp.toKotlinCode(env) + "){")
+        expr.append("\nif (" + ifExp.eval(env) + "){")
         if (ifBody != null) {
-            expr.append(ifBody?.toKotlinCode(env))
+            expr.append(ifBody?.eval(env))
             expr.append("}")
             if (elseBody != null) {
                 expr.append("else {")
-                elseBody?.toKotlinCode(env)
+                elseBody?.eval(env)
                 expr.append("}")
             }
         }
-        return expr.toString();
+        return UnitVal();
     }
 }

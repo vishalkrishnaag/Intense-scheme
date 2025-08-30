@@ -1,17 +1,13 @@
 package org.intense.ast
 
-import org.intense.SymbolTable
-import org.intense.Types.Type
+import org.intense.Env
+import org.intense.Types.StrVal
+import org.intense.Types.Value
 
 class ConnectiveNode(mName:String) : ASTNode() {
     // is
     var name:String = mName
-
-    override fun inferType(env: SymbolTable): Type {
-        TODO("Not yet implemented")
-    }
-
-    override fun toKotlinCode(env: SymbolTable): String {
-        return ""
+    override fun eval(env: Env): Value {
+        return StrVal("")
     }
 }

@@ -1,10 +1,11 @@
 package org.intense.ast;
 
+import org.intense.Env
 import org.intense.TreeWalk
 import org.intense.Lexer
 import org.intense.Parser
-import org.intense.SymbolTable
-import org.intense.Types.Type
+import org.intense.Types.UnitVal
+import org.intense.Types.Value
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
@@ -14,7 +15,7 @@ import java.util.concurrent.ExecutionException
 class ImportNode(value: String, castingVar: AtomNode?) : ASTNode() {
     private var dependency: String = value
     private var castedVar: AtomNode? = castingVar
-    fun processDependency(dependency: String, env: SymbolTable) {
+    fun processDependency(dependency: String, env: Env) {
         // Step 1: Convert string to Path
         val path: Path = Paths.get(dependency)
 
@@ -32,7 +33,7 @@ class ImportNode(value: String, castingVar: AtomNode?) : ASTNode() {
                         println("executing file: ${file.absolutePath}")
                         val content = Files.readString(file.toPath())
                         val lexer = Lexer(content)
-                        val parser = Parser(lexer,env)
+                        val parser = Parser(lexer)
                         val astNodes = parser.parseTree // assuming Kotlin-style property
                         val interpreter = TreeWalk(env)
                         TODO("need completion")
@@ -59,21 +60,13 @@ class ImportNode(value: String, castingVar: AtomNode?) : ASTNode() {
         }
     }
 
-    override fun inferType(env: SymbolTable): Type {
-        TODO("Not callable type check")
-    }
 
-    override fun toKotlinCode(env: SymbolTable): String {
+    override fun eval(env: Env): Value {
         val trimmed: String = if (dependency.startsWith("\"") && dependency.endsWith("\"") && dependency.length >= 2) {
             dependency.substring(1, dependency.length - 1)
         } else {
             dependency
         }
-        return if (castedVar != null) {
-            "import $trimmed as ${castedVar?.value}"
-        } else {
-            "import $trimmed"
-        }
-
+       return UnitVal()
     }
 }

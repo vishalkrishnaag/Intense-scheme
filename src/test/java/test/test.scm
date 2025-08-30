@@ -8,3 +8,5 @@
 (display "hello world"))
 
 (test :x "hello world")
+
+(define hello [lambda x y z] (print x))

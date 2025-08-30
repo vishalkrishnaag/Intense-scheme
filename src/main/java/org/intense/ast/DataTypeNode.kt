@@ -1,34 +1,31 @@
 package org.intense.ast;
 
-import org.intense.SymbolTable
-import org.intense.Types.Type
+import org.intense.Env
+import org.intense.Types.StrVal
+import org.intense.Types.Value
 
 // key<x<y>> types
 class DataTypeNode(dataListNode: MutableList<ASTNode>) : ASTNode() {
     var list: MutableList<ASTNode> = dataListNode
 
-    override fun inferType(env: SymbolTable): Type {
-        TODO("not yet implemented")
-    }
-
-    override fun toKotlinCode(env: SymbolTable): String {
+    override fun eval(env: Env): Value {
         val code = StringBuilder()
         for (it in list) {
             if (it is DataTypeNode) {
-//                val codec = it.toKotlinCode(env)
+//                val codec = it.eval(env)
 //                if (codec.isNotEmpty()) {
 //                    code.append("<")
 //                    code.append(codec)
 //                    code.append(">")
 //                }
                 code.append("<")
-                code.append(it.toKotlinCode(env))
+                code.append(it.eval(env))
                 code.append(">")
 
             } else {
-                code.append(it.toKotlinCode(env))
+                code.append(it.eval(env))
             }
         }
-        return code.toString()
+        return StrVal(code.toString())
     }
 }

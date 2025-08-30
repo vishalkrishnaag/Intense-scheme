@@ -1,17 +1,12 @@
 package org.intense.ast;
 
-import org.intense.SymbolTable
-import org.intense.Types.Type
+import org.intense.Env
+import org.intense.Types.Value
 
-class PackageNode(private var __package__: String) : ASTNode() {
-
-
-    override fun inferType(env: SymbolTable): Type {
+class PackageNode(private var __package__: AtomNode) : ASTNode() {
+    override fun eval(env: Env?): Value? {
         TODO("Not yet implemented")
     }
 
-    override fun toKotlinCode(env: SymbolTable): String {
-        return "package ${__package__.trim('\"')}"
-    }
 
 }

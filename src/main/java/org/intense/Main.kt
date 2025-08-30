@@ -7,6 +7,7 @@ import kotlin.io.nameWithoutExtension
 import kotlin.io.readText
 
     fun main(args: Array<String>) {
+        val environment = Env(null)
         if (args.isNotEmpty()) {
             // File mode
             try {
@@ -14,21 +15,34 @@ import kotlin.io.readText
                 val content = Files.readString(path)
 
                 val lexer = Lexer(content)
-                val environment = SymbolTable(null)
-                val parser = Parser(lexer,environment)
+                val parser = Parser(lexer)
                 val astNodes = parser.parseTree
                 val treeWalk = TreeWalk(environment)
-                val newFile = File(
-                    path.parent.toFile(),
-                    path.fileName.toString().substringBeforeLast('.') + ".kt"
-                )
-                treeWalk.generateKotlinFile(astNodes,newFile.path)
+                treeWalk.traverse(astNodes,environment)
 
             } catch (e: Exception) {
                 System.err.println("Error: ${e.message}")
             }
         } else {
-            throw Exception("Input file is required")
+            // REPL mode
+            println("Welcome to INTENSE REPL. Type 'exit' to quit.")
+            val treeWalk = TreeWalk(environment)
+
+            while (true) {
+                print(">>> ")
+                val line = readLine() ?: break
+                if (line.trim().lowercase() == "exit") break
+
+                try {
+                    val lexer = Lexer(line)
+                    val parser = Parser(lexer)
+                    val astNodes = parser.parseTree
+
+                    treeWalk.traverse(astNodes, environment)
+                } catch (e: Exception) {
+                    println("Error: ${e.message}")
+                }
+            }
         }
     }
 
