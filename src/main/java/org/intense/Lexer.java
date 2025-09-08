@@ -23,7 +23,7 @@ public class Lexer {
         KEYWORDS.put("class", TokenType.CLASS);
         KEYWORDS.put("interface", TokenType.INTERFACE);
 //        KEYWORDS.put("val", TokenType.VAL);
-        KEYWORDS.put("def", TokenType.DEF);
+        KEYWORDS.put("define", TokenType.DEF);
         KEYWORDS.put("using", TokenType.USING);
         KEYWORDS.put("chain", TokenType.CHAIN);
         KEYWORDS.put("as", TokenType.AS);
@@ -55,6 +55,7 @@ public class Lexer {
         KEYWORDS.put("ULong", TokenType.ULONG_KEYWORD);
         KEYWORDS.put("is", TokenType.IS);
         KEYWORDS.put("extends", TokenType.EXTENDS);
+        KEYWORDS.put("lambda", TokenType.LAMBDA);
 
     }
 

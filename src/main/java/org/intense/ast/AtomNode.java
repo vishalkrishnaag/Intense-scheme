@@ -7,8 +7,11 @@ public class AtomNode extends ASTNode {
     public Value getValue() {
         return value;
     }
+    public void setValue(Value valueProvided){
+        this.value = valueProvided;
+    }
 
-    private final Value value;  // already a runtime Value
+    private Value value;  // already a runtime Value
     private boolean mutable = false; // if you want mutability flag
 
     public AtomNode(Value value) {

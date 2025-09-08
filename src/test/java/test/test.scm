@@ -9,4 +9,4 @@
 
 (test :x "hello world")
 
-(define hello [lambda x y z] (print x))
+(define getter (lambda (x y) (+ x (+ x y))))

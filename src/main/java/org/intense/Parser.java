@@ -10,15 +10,13 @@ import java.util.Map;
 
 public class Parser {
     private final Lexer lexer;
-    private final List<String> functionDefinitions = new ArrayList<>();
     private Token currentToken;
     private final List<ASTNode> nodeList;
-    private boolean classEnabled = false;
     private boolean returnEnabled = false;
     // false means field true means inside a method or if else cond
     private boolean variableScopeIsLocal = false;
 
-    public Parser(Lexer lexer) {
+    public Parser(Lexer lexer)  {
         this.lexer = lexer;
         this.currentToken = lexer.nextToken();
         this.nodeList = new ArrayList<>();
@@ -33,19 +31,12 @@ public class Parser {
 
     }
 
-    private void throwClassNotEnabled() {
-        if (!classEnabled) {
-            throw new RuntimeException(currentToken.getValue() + " is only allowed inside a class");
-        }
-    }
 
-    public ASTNode parse() {
+    public ASTNode parse()  {
         if (currentToken.getType() == TokenType.LPAREN) {
             advance();
-        }
         switch (currentToken.getType()) {
             case TokenType.SYMBOL -> {
-                List<ASTNode> elements = new ArrayList<>();
                 // method call (x :y 30 :z "some values") or built in
                 ASTNode callNode = parseCallNode();
                 consume(TokenType.RPAREN);
@@ -61,26 +52,30 @@ public class Parser {
                     casting_var = parseIfAtom();
                     advance();
                 }
+                consume(TokenType.RPAREN);
                 return new ImportNode(token.getValue(), casting_var);
             }
             case RETURN -> {
                 advance();
                 returnEnabled = true;
-                return new ReturnNode(parse());
+                ReturnNode returnNode = new ReturnNode(parse());
+                consume(TokenType.RPAREN);
+                return returnNode;
             }
             case PACKAGE -> {
                 advance();
                 AtomNode atomNode = parseIfAtom();
                 advance();
+                consume(TokenType.RPAREN);
                 return new PackageNode(atomNode);
             }
             case WHILE -> {
-                throwClassNotEnabled();
                 advance();
-                return new WhileConditionNode(parse(), parse());
+                WhileConditionNode whileConditionNode = new WhileConditionNode(parse(), parse());
+                consume(TokenType.RPAREN);
+                return whileConditionNode;
             }
             case SET -> {
-                throwClassNotEnabled();
                 advance();
                 AtomNode first = parseIfAtom();
                 advance();
@@ -91,45 +86,100 @@ public class Parser {
                 if (rest.isEmpty()) {
                     throw new RuntimeException("(Invalid syntax set assign assignee)");
                 }
+                consume(TokenType.RPAREN);
                 return new SetNode(first, new DataListNode(rest));
             }
             case GET -> {
-                throwClassNotEnabled();
                 advance();
                 ASTNode first = parseAtom();
+                consume(TokenType.RPAREN);
                 return new GetNode(first);
             }
             case TokenType.DEF -> {
                 returnEnabled = false;
                 variableScopeIsLocal = true;
-                throwClassNotEnabled();
-                advance();
-                AtomNode atom = parseIfAtom();
-                List<ASTNode> elements = new ArrayList<>();
-                List<String> arguments = null;
-                // function name should be a symbol
-                consume(TokenType.SYMBOL);
-                consume(TokenType.COLON);
-                ASTNode dataType = parseAtom();
+                advance(); // consume 'define'
+
+                // Two possible forms:
+                // (define symbol expr)
+                // (define (symbol args...) body...)
                 if (currentToken.getType() == TokenType.LPAREN) {
-                    arguments = parseUsing();
+                    // Function definition sugar: (define (f x y) body...)
+                    consume(TokenType.LPAREN);
+                    AtomNode name = parseIfAtom();     // function name
+                    List<String> arguments = parseParamList(); // parse args until RPAREN
                     consume(TokenType.RPAREN);
-                } else if (currentToken.getType() == TokenType.LLIST) {
-                    arguments = parseUsing();
-                    consume(TokenType.RLIST);
+
+                    List<ASTNode> body = new ArrayList<>();
+                    while (currentToken.getType() != TokenType.RPAREN
+                            && currentToken.getType() != TokenType.EOF) {
+                        body.add(parse());
+                    }
+                    consume(TokenType.RPAREN);
+
+                    returnEnabled = false;
+                    variableScopeIsLocal = false;
+                    return new DefNode(name, arguments, body, true); // function node
                 } else {
-                    throw new RuntimeException("expected an argument list , if no argument list then [] is expected");
+                    // may be function
+                    AtomNode name = parseIfAtom();
+                    advance();
+                    if(currentToken.getType() == TokenType.LPAREN)
+                    {
+                        advance();
+                        if(currentToken.getType() == TokenType.LAMBDA)
+                        {
+                            advance();
+                            List<String> arguments = parseParamList();
+                            consume(TokenType.RPAREN);
+                            List<ASTNode> body = new ArrayList<>();
+                            while (currentToken.getType() != TokenType.RPAREN
+                                    && currentToken.getType() != TokenType.EOF) {
+                                body.add(parse());
+                            }
+                            consume(TokenType.RPAREN);
+                            consume(TokenType.RPAREN);
+                            return new DefNode(name, arguments, body, true); // function node
+
+                        }
+                        else if(currentToken.getType() == TokenType.RPAREN)
+                        {
+                          advance();
+                            List<ASTNode> body = new ArrayList<>();
+                            while (currentToken.getType() != TokenType.RPAREN
+                                    && currentToken.getType() != TokenType.EOF) {
+                                body.add(parse());
+                            }
+                            consume(TokenType.RPAREN);
+                            consume(TokenType.RPAREN);
+                            return new DefNode(name,null, body, true); // function node
+                        }
+                        else {
+                            // Variable definition: (define x (expr))
+                            ASTNode value = parse();
+
+                            consume(TokenType.RPAREN);
+                            consume(TokenType.RPAREN);
+
+                            returnEnabled = false;
+                            variableScopeIsLocal = false;
+                            return new DefNode(name, value, false); // variable node
+                        }
+                    }
+                    else {
+                        // Variable definition: (define x expr)
+                        ASTNode value = parse();
+
+                        consume(TokenType.RPAREN);
+
+                        returnEnabled = false;
+                        variableScopeIsLocal = false;
+                        return new DefNode(name, value, false); // variable node
+                    }
                 }
-                while (currentToken.getType() != TokenType.RPAREN && currentToken.getType() != TokenType.EOF) {
-                    elements.add(parse());
-                }
-                consume(TokenType.RPAREN);
-                returnEnabled = false;
-                variableScopeIsLocal = false;
-                return new DefNode(atom, dataType, arguments, elements);
             }
+
             case TokenType.CLASS -> {
-                classEnabled = true;
                 List<ASTNode> extendBlock = new ArrayList<>();
                 advance(); // eat class
                 List<ASTNode> elements = new ArrayList<>();
@@ -149,7 +199,7 @@ public class Parser {
                         elements.add(parse());
                     }
                 }
-                classEnabled = false;
+                consume(TokenType.RPAREN);
                 return new ClassNode(atomNode, elements, extendBlock);
             }
             case TokenType.INTERFACE -> {
@@ -161,6 +211,7 @@ public class Parser {
                 while (currentToken.getType() != TokenType.RPAREN && currentToken.getType() != TokenType.EOF) {
                     elements.add(parse());
                 }
+                consume(TokenType.RPAREN);
                 return new InterfaceNode(atomNode, elements);
             }
             case TokenType.ENUM -> {
@@ -171,15 +222,16 @@ public class Parser {
                 while (currentToken.getType() != TokenType.RPAREN && currentToken.getType() != TokenType.EOF) {
                     elements.add(parse());
                 }
+                consume(TokenType.RPAREN);
                 return new EnumNode(atomNode, elements);
             }
             case TokenType.IF -> {
-                throwClassNotEnabled();
                 advance();
                 // function name should be a symbol
                 ASTNode ifExpr = parse();
                 ASTNode ifBody = parse();
                 ASTNode elseBody = parse();
+                consume(TokenType.RPAREN);
                 return new IfConditionNode(ifExpr, ifBody, elseBody);
             }
             case TokenType.LLIST -> {
@@ -201,11 +253,8 @@ public class Parser {
             case TokenType.LBRACE -> {
                 return parseMapNode();// eat `}`
             }
-            case TokenType.RBRACE -> {
+            case TokenType.RBRACE,TokenType.RPAREN, RLIST -> {
                 throw new RuntimeException("unexpected closing ) or } or ] , got " + currentToken);
-            }
-            case TokenType.RPAREN, RLIST -> {
-                return null;
             }
             case TokenType.IS -> {
                 advance();
@@ -214,6 +263,10 @@ public class Parser {
             default -> {
                 return parseAtom();
             }
+        }
+        }
+        else {
+            return parseAtom();
         }
     }
 
@@ -241,6 +294,23 @@ public class Parser {
             throw new RuntimeException("error in function definition expected a ) or ]");
         }
         return arguments;
+    }
+
+    private List<String> parseParamList() {
+        List<String> params = new ArrayList<>();
+
+        // keep consuming until RPAREN
+        while (currentToken.getType() != TokenType.RPAREN &&
+                currentToken.getType() != TokenType.EOF) {
+            if (currentToken.getType() == TokenType.SYMBOL) {
+                params.add(currentToken.getValue());
+                advance();
+            } else {
+                throw new RuntimeException("Expected parameter name, found " + currentToken);
+            }
+        }
+
+        return params;
     }
 
     private DataTypeNode parseDataTypes() {
@@ -296,7 +366,7 @@ public class Parser {
 
     private ASTNode parseAtom() {
         Token token = currentToken;
-        consume(token.getType());
+        advance();
 
         return switch (token.getType()) {
             case THIS:

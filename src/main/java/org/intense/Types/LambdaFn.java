@@ -23,18 +23,26 @@ public class LambdaFn extends FnVal {
 
     @Override
     public Value apply(Value[] args, Env callerEnv) {
-        if (args.length != params.size()) {
-            throw new RuntimeException("Expected " + params.size() + " args, got " + args.length);
+        if (params != null)
+        {
+            if (args.length != params.size()) {
+                throw new RuntimeException("Expected " + params.size() + " args, got " + args.length);
+            }
+            // new local env chained to closure
+            Env localEnv = new Env(closure);
+            for (int i = 0; i < params.size(); i++) {
+                localEnv.define(params.get(i), args[i]);
+            }
+            // Evaluate body in this new environment
+            return body.eval(localEnv);
+        }
+        else
+        {
+            // Evaluate body in this new environment
+            return body.eval(callerEnv);
         }
 
-        // new local env chained to closure
-        Env localEnv = new Env(closure);
-        for (int i = 0; i < params.size(); i++) {
-            localEnv.define(params.get(i), args[i]);
-        }
 
-        // Evaluate body in this new environment
-        return body.eval(localEnv);
     }
 }
 

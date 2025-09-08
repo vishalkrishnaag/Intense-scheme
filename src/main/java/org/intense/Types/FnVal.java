@@ -16,9 +16,5 @@ public abstract class FnVal extends Value{
         return 0;
     }
 
-    public Value invoke(Value[] args, Env env) {
-        return null;
-    }
-
     public abstract Value apply(Value[] args, Env env);
 }
