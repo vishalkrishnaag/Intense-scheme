@@ -12,18 +12,12 @@ public class Parser {
     private final Lexer lexer;
     private Token currentToken;
     private final List<ASTNode> nodeList;
-    private boolean returnEnabled = false;
-    // false means field true means inside a method or if else cond
-    private boolean variableScopeIsLocal = false;
 
-    public Parser(Lexer lexer)  {
+    public Parser(Lexer lexer) {
         this.lexer = lexer;
         this.currentToken = lexer.nextToken();
         this.nodeList = new ArrayList<>();
         while (currentToken.getType() != TokenType.EOF) {
-            if (currentToken.getType() == TokenType.RPAREN) {
-                throw new RuntimeException("An extra closing bracket but found " + currentToken);
-            }
             ASTNode input = this.parse();
             if (input != null)
                 this.nodeList.add(input);
@@ -31,16 +25,37 @@ public class Parser {
 
     }
 
-
-    public ASTNode parse()  {
-        if (currentToken.getType() == TokenType.LPAREN) {
+    private ASTNode parse() {
+        Token tok = currentToken;
+        if (tok.getType() == TokenType.LPAREN) {
             advance();
+            return this.parseListExpr();
+        } else if (currentToken.getType() == TokenType.SYMBOL) {
+            advance();
+            return new AtomNode(new VarVal(tok.getValue()));
+        } else if (currentToken.getType() == TokenType.NUMBER) {
+            advance();
+            return new AtomNode(new NumVal(Double.parseDouble(tok.getValue())));
+        }
+        else if (currentToken.getType() == TokenType.STRING) {
+            advance();
+            return new AtomNode(new StrVal(tok.getValue()));
+        }
+        throw new RuntimeException("Unexpected token: " + currentToken.toString());
+    }
+
+
+    public ASTNode parseListExpr() {
         switch (currentToken.getType()) {
             case TokenType.SYMBOL -> {
                 // method call (x :y 30 :z "some values") or built in
                 ASTNode callNode = parseCallNode();
                 consume(TokenType.RPAREN);
                 return callNode;
+            }
+            case LAMBDA -> {
+                advance();
+                return parseLambda();
             }
             case TokenType.IMPORT -> {
                 advance();
@@ -57,7 +72,6 @@ public class Parser {
             }
             case RETURN -> {
                 advance();
-                returnEnabled = true;
                 ReturnNode returnNode = new ReturnNode(parse());
                 consume(TokenType.RPAREN);
                 return returnNode;
@@ -96,88 +110,35 @@ public class Parser {
                 return new GetNode(first);
             }
             case TokenType.DEF -> {
-                returnEnabled = false;
-                variableScopeIsLocal = true;
                 advance(); // consume 'define'
 
-                // Two possible forms:
-                // (define symbol expr)
-                // (define (symbol args...) body...)
                 if (currentToken.getType() == TokenType.LPAREN) {
-                    // Function definition sugar: (define (f x y) body...)
+                    // Function definition sugar: (define (f arg1 arg2 ...) body...)
                     consume(TokenType.LPAREN);
-                    AtomNode name = parseIfAtom();     // function name
-                    List<String> arguments = parseParamList(); // parse args until RPAREN
-                    consume(TokenType.RPAREN);
 
-                    List<ASTNode> body = new ArrayList<>();
-                    while (currentToken.getType() != TokenType.RPAREN
-                            && currentToken.getType() != TokenType.EOF) {
-                        body.add(parse());
-                    }
-                    consume(TokenType.RPAREN);
+                    AtomNode name = parseIfAtom();              // function name
+                    advance();
+                    List<String> arguments = parseParamList();  // parse args until R_PAREN
 
-                    returnEnabled = false;
-                    variableScopeIsLocal = false;
-                    return new DefNode(name, arguments, body, true); // function node
+                    consume(TokenType.RPAREN); // close param list
+
+                    // Parse body until closing R_PAREN
+                    List<ASTNode> body = parseBody();
+                    consume(TokenType.RPAREN); // close define
+                    // --- Desugar to (define f (lambda (args...) body...)) ---
+                    LambdaNode lambda = new LambdaNode(arguments, body);
+                    return new DefNode(name, lambda);
                 } else {
-                    // may be function
+                    // Variable definition: (define x expr)
                     AtomNode name = parseIfAtom();
                     advance();
-                    if(currentToken.getType() == TokenType.LPAREN)
-                    {
-                        advance();
-                        if(currentToken.getType() == TokenType.LAMBDA)
-                        {
-                            advance();
-                            List<String> arguments = parseParamList();
-                            consume(TokenType.RPAREN);
-                            List<ASTNode> body = new ArrayList<>();
-                            while (currentToken.getType() != TokenType.RPAREN
-                                    && currentToken.getType() != TokenType.EOF) {
-                                body.add(parse());
-                            }
-                            consume(TokenType.RPAREN);
-                            consume(TokenType.RPAREN);
-                            return new DefNode(name, arguments, body, true); // function node
+                    ASTNode value = parse();
 
-                        }
-                        else if(currentToken.getType() == TokenType.RPAREN)
-                        {
-                          advance();
-                            List<ASTNode> body = new ArrayList<>();
-                            while (currentToken.getType() != TokenType.RPAREN
-                                    && currentToken.getType() != TokenType.EOF) {
-                                body.add(parse());
-                            }
-                            consume(TokenType.RPAREN);
-                            consume(TokenType.RPAREN);
-                            return new DefNode(name,null, body, true); // function node
-                        }
-                        else {
-                            // Variable definition: (define x (expr))
-                            ASTNode value = parse();
-
-                            consume(TokenType.RPAREN);
-                            consume(TokenType.RPAREN);
-
-                            returnEnabled = false;
-                            variableScopeIsLocal = false;
-                            return new DefNode(name, value, false); // variable node
-                        }
-                    }
-                    else {
-                        // Variable definition: (define x expr)
-                        ASTNode value = parse();
-
-                        consume(TokenType.RPAREN);
-
-                        returnEnabled = false;
-                        variableScopeIsLocal = false;
-                        return new DefNode(name, value, false); // variable node
-                    }
+                    consume(TokenType.RPAREN); // close define
+                    return new DefNode(name, value); // variable node
                 }
             }
+
 
             case TokenType.CLASS -> {
                 List<ASTNode> extendBlock = new ArrayList<>();
@@ -253,7 +214,7 @@ public class Parser {
             case TokenType.LBRACE -> {
                 return parseMapNode();// eat `}`
             }
-            case TokenType.RBRACE,TokenType.RPAREN, RLIST -> {
+            case TokenType.RBRACE, TokenType.RPAREN, RLIST -> {
                 throw new RuntimeException("unexpected closing ) or } or ] , got " + currentToken);
             }
             case TokenType.IS -> {
@@ -261,12 +222,8 @@ public class Parser {
                 return new ConnectiveNode("is");
             }
             default -> {
-                return parseAtom();
+                return this.parse();
             }
-        }
-        }
-        else {
-            return parseAtom();
         }
     }
 
@@ -278,8 +235,8 @@ public class Parser {
             while (currentToken.getType() != TokenType.RPAREN &&
                     currentToken.getType() != TokenType.RLIST &&
                     currentToken.getType() != TokenType.EOF) {
-                 arguments.add(currentToken.getValue());
-                 advance();
+                arguments.add(currentToken.getValue());
+                advance();
                 // atom:Type "value"
                 consume(TokenType.SYMBOL);
                 consume(TokenType.COLON);
@@ -311,6 +268,27 @@ public class Parser {
         }
 
         return params;
+    }
+
+    // (lambda (x y) body...)
+    private ASTNode parseLambda() {
+        consume(TokenType.LPAREN);
+        List<String> params = parseParamList();
+        consume(TokenType.RPAREN);
+
+        List<ASTNode> body = parseBody();
+        consume(TokenType.RPAREN);
+
+        return new LambdaNode(params, body);
+    }
+
+    private List<ASTNode> parseBody() {
+        List<ASTNode> body = new ArrayList<>();
+        while (currentToken.getType() != TokenType.RPAREN
+                && currentToken.getType() != TokenType.EOF) {
+            body.add(parse());
+        }
+        return body;
     }
 
     private DataTypeNode parseDataTypes() {
@@ -457,11 +435,7 @@ public class Parser {
             case NUMBER -> new AtomNode(new NumVal(Double.parseDouble(currentToken.getValue())));
             case STRING -> new AtomNode(new StrVal(currentToken.getValue()));
             case SYMBOL -> {
-                String identifier = currentToken.getValue();
-                if (identifier.contains("-")) {
-                    identifier = "in10s_" + identifier.replace("-", "_");
-                }
-                yield new AtomNode(new VarVal(identifier));
+                yield new AtomNode(new VarVal(currentToken.getValue()));
             }
             case BOOLEAN -> new AtomNode(new BoolVal(currentToken.getValue().equals("true")));
 //            case COLON -> new AtomNode(TokenType.COLON, currentToken.getValue());

@@ -7,10 +7,10 @@ import java.util.List;
 
 public class LambdaFn extends FnVal {
     private final List<String> params;
-    private final ASTNode body;
+    private final List<ASTNode> body;
     private final Env closure;
 
-    public LambdaFn(List<String> params, ASTNode body, Env closure) {
+    public LambdaFn(List<String> params, List<ASTNode> body, Env closure) {
         this.params = params;
         this.body = body;
         this.closure = closure;
@@ -23,8 +23,7 @@ public class LambdaFn extends FnVal {
 
     @Override
     public Value apply(Value[] args, Env callerEnv) {
-        if (params != null)
-        {
+
             if (args.length != params.size()) {
                 throw new RuntimeException("Expected " + params.size() + " args, got " + args.length);
             }
@@ -34,14 +33,12 @@ public class LambdaFn extends FnVal {
                 localEnv.define(params.get(i), args[i]);
             }
             // Evaluate body in this new environment
-            return body.eval(localEnv);
-        }
-        else
-        {
-            // Evaluate body in this new environment
-            return body.eval(callerEnv);
-        }
-
+            Value result = null;
+            for (ASTNode stmt : body)
+            {
+                result = stmt.eval(callerEnv);
+            }
+            return result;
 
     }
 }
