@@ -1,5 +1,5 @@
 package org.intense;
-import org.intense.Types.UnitVal;
+import org.intense.Types.NullVal;
 import org.intense.Types.Value;
 import org.intense.ast.ASTNode;
 
@@ -11,7 +11,7 @@ public class TreeWalk {
     }
 
     public Value traverse(List<ASTNode> astNodes, Env env) {
-        Value last = UnitVal.INSTANCE; // Assuming UnitVal is a singleton with INSTANCE field
+        Value last = NullVal.INSTANCE; // Assuming UnitVal is a singleton with INSTANCE field
         for (ASTNode node : astNodes) {
             System.out.println("evaluating " + node);
             last = node.eval(env);

@@ -40,7 +40,6 @@ public class Lexer {
         KEYWORDS.put("for", TokenType.FOR);
         KEYWORDS.put("foreach", TokenType.FOREACH);
         KEYWORDS.put("null", TokenType.NULL);
-        KEYWORDS.put("None", TokenType.NONE);
         KEYWORDS.put("return", TokenType.RETURN);
         KEYWORDS.put("String", TokenType.STRING_KEYWORD);
         KEYWORDS.put("Int", TokenType.INT_KEYWORD);
@@ -141,7 +140,7 @@ public class Lexer {
         while (currentChar != '\0' &&
                 !Character.isWhitespace(currentChar) &&
                 !isTerminator(currentChar) &&
-                currentChar != ':' && currentChar != '?'&& currentChar != '.') {
+                currentChar != ':' && currentChar != '.') {
             sb.append(currentChar);
             advance();
         }
@@ -153,7 +152,7 @@ public class Lexer {
 
     private boolean isTerminator(char c) {
         return c == '(' || c == ')' || c == '"' || c == ';' ||
-                c == '[' || c == ']' || c == '{' || c == '}' || c== '<' || c == '>' ;
+                c == '[' || c == ']' || c == '{' || c == '}';
     }
 
     public Token nextToken() {
@@ -178,9 +177,9 @@ public class Lexer {
                 case '{': advance(); return new Token(TokenType.LBRACE, "{", startLine, startCol);
                 case '}': advance(); return new Token(TokenType.RBRACE, "}", startLine, startCol);
                 case ':': advance(); return new Token(TokenType.COLON, ":", startLine, startCol);
-                case '?': advance(); return new Token(TokenType.NULLABLE, "?", startLine, startCol);
-                case '<': advance(); return new Token(TokenType.LESS_THAN, "<", startLine, startCol);
-                case '>': advance(); return new Token(TokenType.GREATER_THAN, ">", startLine, startCol);
+//                case '?': advance(); return new Token(TokenType.NULLABLE, "?", startLine, startCol);
+//                case '<': advance(); return new Token(TokenType.LESS_THAN, "<", startLine, startCol);
+//                case '>': advance(); return new Token(TokenType.GREATER_THAN, ">", startLine, startCol);
                 case '.': advance(); return new Token(TokenType.DOT, ".", startLine, startCol);
                 case '"': return readString();
                 case '+': case '-':

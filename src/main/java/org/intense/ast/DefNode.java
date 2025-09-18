@@ -4,6 +4,7 @@ import org.intense.Env;
 import org.intense.Types.*;
 
 import java.util.List;
+import java.util.Set;
 
 public class DefNode extends ASTNode {
     private final AtomNode name;
@@ -13,12 +14,22 @@ public class DefNode extends ASTNode {
 
     // Constructor for function definition
     public DefNode(AtomNode name, LambdaNode lambdaNode) {
+        Set<String> protectedSymbols = Set.of("+", "-", "*", "/","%","<",">","!=","define","equals?");
+         if(protectedSymbols.contains(name.getValue().asString()))
+         {
+             throw new RuntimeException("Cannot redefine built-in: " + name.getValue().asString());
+         }
         this.name = name;
         this.lambdaNode = lambdaNode;
     }
 
     // Constructor for variable declaration
     public DefNode(AtomNode name,ASTNode expr) {
+        Set<String> protectedSymbols = Set.of("+", "-", "*", "/","%","<",">","!=","define","equals?");
+        if(protectedSymbols.contains(name.getValue().asString()))
+        {
+            throw new RuntimeException("Cannot redefine built-in: " + name.getValue().asString());
+        }
         this.name = name;
         this.valueExpr = expr;
     }

@@ -1,5 +1,8 @@
 package org.intense;
 
+import org.intense.Types.BoolVal;
+import org.intense.Types.BuiltIn;
+import org.intense.Types.NumVal;
 import org.intense.Types.Value;
 
 import java.util.HashMap;

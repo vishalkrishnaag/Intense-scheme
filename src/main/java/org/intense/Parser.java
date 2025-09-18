@@ -26,22 +26,13 @@ public class Parser {
     }
 
     private ASTNode parse() {
-        Token tok = currentToken;
-        if (tok.getType() == TokenType.LPAREN) {
+        if (currentToken.getType() == TokenType.LPAREN) {
             advance();
             return this.parseListExpr();
-        } else if (currentToken.getType() == TokenType.SYMBOL) {
-            advance();
-            return new AtomNode(new VarVal(tok.getValue()));
-        } else if (currentToken.getType() == TokenType.NUMBER) {
-            advance();
-            return new AtomNode(new NumVal(Double.parseDouble(tok.getValue())));
         }
-        else if (currentToken.getType() == TokenType.STRING) {
-            advance();
-            return new AtomNode(new StrVal(tok.getValue()));
+         else {
+           return parseAtom();
         }
-        throw new RuntimeException("Unexpected token: " + currentToken.toString());
     }
 
 
@@ -116,10 +107,8 @@ public class Parser {
                     // Function definition sugar: (define (f arg1 arg2 ...) body...)
                     consume(TokenType.LPAREN);
 
-                    AtomNode name = parseIfAtom();              // function name
-                    advance();
+                    ASTNode name = parseAtom();              // function name
                     List<String> arguments = parseParamList();  // parse args until R_PAREN
-
                     consume(TokenType.RPAREN); // close param list
 
                     // Parse body until closing R_PAREN
@@ -127,53 +116,26 @@ public class Parser {
                     consume(TokenType.RPAREN); // close define
                     // --- Desugar to (define f (lambda (args...) body...)) ---
                     LambdaNode lambda = new LambdaNode(arguments, body);
-                    return new DefNode(name, lambda);
+                    if(name instanceof AtomNode atom){
+                        return new DefNode(atom, lambda);
+                    }else {
+                        throw new RuntimeException("A define name should be an identifier");
+                    }
                 } else {
                     // Variable definition: (define x expr)
-                    AtomNode name = parseIfAtom();
-                    advance();
+                    ASTNode name = parseAtom();
                     ASTNode value = parse();
 
                     consume(TokenType.RPAREN); // close define
-                    return new DefNode(name, value); // variable node
-                }
-            }
-
-
-            case TokenType.CLASS -> {
-                List<ASTNode> extendBlock = new ArrayList<>();
-                advance(); // eat class
-                List<ASTNode> elements = new ArrayList<>();
-                AtomNode atomNode = parseIfAtom();
-                advance();
-                if (currentToken.getType() == TokenType.LLIST) {
-                    advance();
-                    if (currentToken.getType() == TokenType.EXTENDS) {
-                        advance();
-                        while (currentToken.getType() != TokenType.RLIST && currentToken.getType() != TokenType.EOF) {
-                            extendBlock.add(parse());
-                        }
+                    if(name instanceof AtomNode atomic)
+                    {
+                        return new DefNode(atomic, value); // variable node
                     }
-                    consume(TokenType.RLIST);
-                } else {
-                    while (currentToken.getType() != TokenType.RPAREN && currentToken.getType() != TokenType.EOF) {
-                        elements.add(parse());
+                    else {
+                        throw new RuntimeException("A define name should be an identifier");
                     }
-                }
-                consume(TokenType.RPAREN);
-                return new ClassNode(atomNode, elements, extendBlock);
-            }
-            case TokenType.INTERFACE -> {
-                advance(); // eat interface
-                List<ASTNode> elements = new ArrayList<>();
-                AtomNode atomNode = parseIfAtom();
-                advance();
 
-                while (currentToken.getType() != TokenType.RPAREN && currentToken.getType() != TokenType.EOF) {
-                    elements.add(parse());
                 }
-                consume(TokenType.RPAREN);
-                return new InterfaceNode(atomNode, elements);
             }
             case TokenType.ENUM -> {
                 advance(); // eat enum
@@ -257,11 +219,15 @@ public class Parser {
         List<String> params = new ArrayList<>();
 
         // keep consuming until RPAREN
-        while (currentToken.getType() != TokenType.RPAREN &&
-                currentToken.getType() != TokenType.EOF) {
-            if (currentToken.getType() == TokenType.SYMBOL) {
-                params.add(currentToken.getValue());
-                advance();
+        while (currentToken.getType() != TokenType.RPAREN && currentToken.getType() != TokenType.EOF) {
+            if (currentToken.getType() == TokenType.SYMBOL || currentToken.getType() == TokenType.DOT) {
+                ASTNode astNode = parseAtom();
+                if (astNode instanceof AtomNode atom) {
+                    params.add(atom.getValue().asString());
+                }
+                else {
+                    throw new RuntimeException("A function parameter name should be an identifier");
+                }
             } else {
                 throw new RuntimeException("Expected parameter name, found " + currentToken);
             }
@@ -347,56 +313,15 @@ public class Parser {
         advance();
 
         return switch (token.getType()) {
-            case THIS:
-                if (currentToken.getType() == TokenType.DOT) {
-                    // symbol.symbol
-                    List<ASTNode> elements = new ArrayList<>();
-                    while (currentToken.getType() == TokenType.DOT || currentToken.getType() == TokenType.SYMBOL) {
-                        if (currentToken.getType() == TokenType.DOT) {
-                            advance();
-                        }
-                        elements.add(parseIfAtom());
-                        advance();
-                    }
-                    yield new LinkingNode(token.getValue(), elements);
-                }
-                yield new AtomNode(new ThisVal());
             case NUMBER:
                 yield new AtomNode(new NumVal(Double.parseDouble(token.getValue())));
             case STRING:
                 yield new AtomNode(new StrVal(token.getValue()));
-            case NONE:
-                yield new AtomNode(new UnitVal());
-//            case DOT:
-//                yield new AtomNode(TokenType.DOT, token.getValue());
-//            case COLON:
-//                yield new AtomNode(TokenType.COLON, token.getValue());
-//            case NULL:
-//                yield new AtomNode(TokenType.NULL, token.getValue());
-//            case NULLABLE:
-//                yield new AtomNode(TokenType.NULLABLE, token.getValue());
-//            case ANY_KEYWORD:
-//                yield new AtomNode(TokenType.ANY_KEYWORD, token.getValue());
-//            case STRING_KEYWORD:
-//                yield new AtomNode(TokenType.STRING_KEYWORD, token.getValue());
-//            case INT_KEYWORD:
-//                yield new AtomNode(TokenType.INT_KEYWORD, token.getValue());
-//            case DOUBLE_KEYWORD:
-//                yield new AtomNode(TokenType.DOUBLE_KEYWORD, token.getValue());
-//            case BOOLEAN_KEYWORD:
-//                yield new AtomNode(TokenType.BOOLEAN_KEYWORD, token.getValue());
-//            case FLOAT_KEYWORD:
-//                yield new AtomNode(TokenType.FLOAT_KEYWORD, token.getValue());
-//            case BYTE_KEYWORD:
-//                yield new AtomNode(TokenType.BYTE_KEYWORD, token.getValue());
-//            case SHORT_KEYWORD:
-//                yield new AtomNode(TokenType.SHORT_KEYWORD, token.getValue());
-//            case LONG_KEYWORD:
-//                yield new AtomNode(TokenType.LONG_KEYWORD, token.getValue());
-//            case UBYTE_KEYWORD:
-//                yield new AtomNode(TokenType.UBYTE_KEYWORD, token.getValue());
-//            case ULONG_KEYWORD:
-//                yield new AtomNode(TokenType.ULONG_KEYWORD, token.getValue());
+            case DOT:
+                //..symbol format
+                yield new AtomNode(new VarVal(parseChainedExpr(token.getValue())));
+            case NULL:
+                yield new AtomNode(new NullVal());
             case SYMBOL:
                 // symbol[key]
                 if (currentToken.getType() == TokenType.LLIST) {
@@ -408,16 +333,8 @@ public class Parser {
                     consume(TokenType.RLIST); // eat `[`
                     yield new ListAccessNode(token.getValue(), new DataListNode(elements));
                 } else if (currentToken.getType() == TokenType.DOT) {
-                    // symbol.symbol
-                    List<ASTNode> elements = new ArrayList<>();
-                    while (currentToken.getType() == TokenType.DOT || currentToken.getType() == TokenType.SYMBOL) {
-                        if (currentToken.getType() == TokenType.DOT) {
-                            advance();
-                        }
-                        elements.add(parseIfAtom());
-                        advance();
-                    }
-                    yield new LinkingNode(token.getValue(), elements);
+                    // symbol.value
+                    yield new AtomNode(new VarVal(parseChainedExpr(token.getValue())));
                 } else if (currentToken.getType() == TokenType.LESS_THAN) {
                     yield new CustomDataTypeNode(token.getValue(), parseDataTypes());
                 }
@@ -430,29 +347,32 @@ public class Parser {
         };
     }
 
+    private String parseChainedExpr(String firstElement) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(firstElement);
+
+        while (currentToken.getType() == TokenType.DOT) {
+            advance(); // consume dot
+            sb.append(".");
+
+            if (currentToken.getType() != TokenType.SYMBOL) {
+                throw new RuntimeException("Expected SYMBOL after '.'");
+            }
+
+            sb.append(currentToken.getValue());
+            advance(); // consume the symbol
+        }
+        return sb.toString();
+    }
+
+
     private AtomNode parseIfAtom() {
         return switch (currentToken.getType()) {
             case NUMBER -> new AtomNode(new NumVal(Double.parseDouble(currentToken.getValue())));
             case STRING -> new AtomNode(new StrVal(currentToken.getValue()));
-            case SYMBOL -> {
-                yield new AtomNode(new VarVal(currentToken.getValue()));
-            }
+            case SYMBOL -> new AtomNode(new VarVal(currentToken.getValue()));
+            case NULL -> new AtomNode(new NullVal());
             case BOOLEAN -> new AtomNode(new BoolVal(currentToken.getValue().equals("true")));
-//            case COLON -> new AtomNode(TokenType.COLON, currentToken.getValue());
-//            case DOT -> new AtomNode(TokenType.DOT, currentToken.getValue());
-//            case NULL -> new AtomNode(TokenType.NULL, currentToken.getValue());
-//            case NULLABLE -> new AtomNode(TokenType.NULLABLE, currentToken.getValue());
-//            case ANY_KEYWORD -> new AtomNode(TokenType.ANY_KEYWORD, currentToken.getValue());
-//            case STRING_KEYWORD -> new AtomNode(TokenType.STRING_KEYWORD, currentToken.getValue());
-//            case INT_KEYWORD -> new AtomNode(TokenType.INT_KEYWORD, currentToken.getValue());
-//            case DOUBLE_KEYWORD -> new AtomNode(TokenType.DOUBLE_KEYWORD, currentToken.getValue());
-//            case BOOLEAN_KEYWORD -> new AtomNode(TokenType.BOOLEAN_KEYWORD, currentToken.getValue());
-//            case FLOAT_KEYWORD -> new AtomNode(TokenType.FLOAT_KEYWORD, currentToken.getValue());
-//            case BYTE_KEYWORD -> new AtomNode(TokenType.BYTE_KEYWORD, currentToken.getValue());
-//            case SHORT_KEYWORD -> new AtomNode(TokenType.SHORT_KEYWORD, currentToken.getValue());
-//            case LONG_KEYWORD -> new AtomNode(TokenType.LONG_KEYWORD, currentToken.getValue());
-//            case UBYTE_KEYWORD -> new AtomNode(TokenType.UBYTE_KEYWORD, currentToken.getValue());
-//            case ULONG_KEYWORD -> new AtomNode(TokenType.ULONG_KEYWORD, currentToken.getValue());
             default -> throw new RuntimeException("Unexpected token: " + currentToken);
         };
     }

@@ -8,6 +8,7 @@ import kotlin.io.readText
 
     fun main(args: Array<String>) {
         val environment = Env(null)
+        val builtInLoader:BuiltInLoader = BuiltInLoader(environment)
         if (args.isNotEmpty()) {
             // File mode
             try {

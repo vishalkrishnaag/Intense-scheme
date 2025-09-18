@@ -1,7 +1,7 @@
 package org.intense.ast;
 
 import org.intense.Env
-import org.intense.Types.UnitVal
+import org.intense.Types.NullVal
 import org.intense.Types.Value
 
 class IfConditionNode(ifExpr: ASTNode, dtifBody: ASTNode, dtelseBody: ASTNode) : ASTNode() {
@@ -21,6 +21,6 @@ class IfConditionNode(ifExpr: ASTNode, dtifBody: ASTNode, dtelseBody: ASTNode) :
                 expr.append("}")
             }
         }
-        return UnitVal();
+        return NullVal();
     }
 }

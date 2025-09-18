@@ -4,7 +4,7 @@ import org.intense.Env
 import org.intense.TreeWalk
 import org.intense.Lexer
 import org.intense.Parser
-import org.intense.Types.UnitVal
+import org.intense.Types.NullVal
 import org.intense.Types.Value
 import java.io.IOException
 import java.nio.file.Files
@@ -67,6 +67,6 @@ class ImportNode(value: String, castingVar: AtomNode?) : ASTNode() {
         } else {
             dependency
         }
-       return UnitVal()
+       return NullVal()
     }
 }
