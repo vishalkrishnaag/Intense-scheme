@@ -314,8 +314,16 @@ public class Parser {
 
         return switch (token.getType()) {
             case NUMBER:
+                if (currentToken.getType() == TokenType.DOT) {
+                    // symbol.value
+                    yield new AtomNode(new VarVal(parseChainedExpr(token.getValue())));
+                }
                 yield new AtomNode(new NumVal(Double.parseDouble(token.getValue())));
             case STRING:
+                if (currentToken.getType() == TokenType.DOT) {
+                    // symbol.value
+                    yield new AtomNode(new VarVal(parseChainedExpr(token.getValue())));
+                }
                 yield new AtomNode(new StrVal(token.getValue()));
             case DOT:
                 //..symbol format
@@ -346,6 +354,7 @@ public class Parser {
                 throw new RuntimeException("Unexpected token: " + token);
         };
     }
+
 
     private String parseChainedExpr(String firstElement) {
         StringBuilder sb = new StringBuilder();

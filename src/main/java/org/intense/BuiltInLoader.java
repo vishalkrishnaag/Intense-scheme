@@ -1,13 +1,12 @@
 package org.intense;
 
-import org.intense.Types.BoolVal;
-import org.intense.Types.BuiltIn;
-import org.intense.Types.NumVal;
-import org.intense.Types.Value;
+import org.intense.Types.*;
+
+import java.util.HashMap;
 
 public class BuiltInLoader {
     public BuiltInLoader(Env env) {
-        env.define("+", new BuiltIn(args -> {
+        env.defineBuiltIn("+", new BuiltIn(args -> {
             if (args.isEmpty()) {
                 throw new RuntimeException("'+' requires at least one argument");
             }
@@ -16,17 +15,34 @@ public class BuiltInLoader {
             return new NumVal(sum);
         }));
 
-        env.define("add?", new BuiltIn(args -> {
+        env.defineBuiltIn("add?", new BuiltIn(args -> {
             if (args.isEmpty()) {
                 throw new RuntimeException("'+' requires at least one argument");
             }
             double sum = 0;
-            for (Value v : args) sum += v.asNumber();
-            return new NumVal(sum);
+            StringBuilder summ = new StringBuilder();
+            for (Value v : args) {
+                if (v instanceof StrVal) {
+                    summ.append(v.asString());
+                } else {
+                    if (summ.isEmpty()) {
+                        sum += v.asNumber();
+                    } else {
+                        summ.append(v.asNumber());
+                    }
+
+                }
+            }
+            if (summ.isEmpty()) {
+                return new NumVal(sum);
+            }
+            else {
+                return new StrVal(summ.toString());
+            }
         }));
 
         // Subtraction
-        env.define("-", new BuiltIn(args -> {
+        env.defineBuiltIn("-", new BuiltIn(args -> {
             if (args.isEmpty()) {
                 throw new RuntimeException("'-' requires at least one argument");
             }
@@ -42,7 +58,7 @@ public class BuiltInLoader {
         }));
 
         // Subtraction
-        env.define("sub?", new BuiltIn(args -> {
+        env.defineBuiltIn("sub?", new BuiltIn(args -> {
             if (args.isEmpty()) {
                 throw new RuntimeException("'-' requires at least one argument");
             }
@@ -57,7 +73,34 @@ public class BuiltInLoader {
             return new NumVal(result);
         }));
 
-        env.define("*", new BuiltIn(args -> {
+        env.defineBuiltIn("make-instance!", new BuiltIn(args -> {
+            String parent = (args.get(0)).asString(); // "a"
+            String child  = (args.get(1)).asString(); // "p"
+
+            // copy root
+            env.define(child, env.lookup(parent));
+
+            // copy dotted children
+            for (var entry : env.getSymbol().entrySet()) {
+                String key = entry.getKey();
+                if (key.startsWith(parent + ".")) {
+                    String suffix = key.substring(parent.length()); // ".b" or ".c"
+                    env.define(child + suffix, entry.getValue());
+                }
+            }
+
+            return new StrVal("#<done>");
+        }));
+
+        env.defineBuiltIn("make-copy!", new BuiltIn(args -> {
+            String parent = (args.get(0)).asString();
+            String child  = (args.get(1)).asString();
+            env.define(child, new ReferenceValue(parent));
+            return new StrVal("#<done>");
+        }));
+
+
+        env.defineBuiltIn("*", new BuiltIn(args -> {
             if (args.isEmpty()) {
                 throw new RuntimeException("'*' requires at least one argument");
             }
@@ -66,7 +109,7 @@ public class BuiltInLoader {
             return new NumVal(sum);
         }));
 
-        env.define("mul?", new BuiltIn(args -> {
+        env.defineBuiltIn("mul?", new BuiltIn(args -> {
             if (args.isEmpty()) {
                 throw new RuntimeException("'*' requires at least one argument");
             }
@@ -76,7 +119,7 @@ public class BuiltInLoader {
         }));
 
         // Division
-        env.define("/", new BuiltIn(args -> {
+        env.defineBuiltIn("/", new BuiltIn(args -> {
             if (args.isEmpty()) {
                 throw new RuntimeException("'/' requires at least one argument");
             }
@@ -91,7 +134,7 @@ public class BuiltInLoader {
             return new NumVal(result);
         }));
 
-        env.define("div?", new BuiltIn(args -> {
+        env.defineBuiltIn("div?", new BuiltIn(args -> {
             if (args.isEmpty()) {
                 throw new RuntimeException("'/' requires at least one argument");
             }
@@ -107,8 +150,7 @@ public class BuiltInLoader {
         }));
 
 
-
-        env.define("%", new BuiltIn(args -> {
+        env.defineBuiltIn("%", new BuiltIn(args -> {
             if (args.size() != 2) {
                 throw new RuntimeException("'%' requires exactly 2 arguments");
             }
@@ -118,8 +160,7 @@ public class BuiltInLoader {
         }));
 
 
-
-        env.define("not", new BuiltIn(args -> {
+        env.defineBuiltIn("not", new BuiltIn(args -> {
             if (args.size() != 1) {
                 throw new RuntimeException("'%' requires exactly 1 argument");
             }
@@ -127,7 +168,7 @@ public class BuiltInLoader {
             return new BoolVal(!b);
         }));
 
-        env.define("=", new BuiltIn(args -> {
+        env.defineBuiltIn("=", new BuiltIn(args -> {
             if (args.size() < 2) {
                 throw new RuntimeException("'=' requires at least 2 arguments");
             }
@@ -142,7 +183,7 @@ public class BuiltInLoader {
             return new BoolVal(true);
         }));
 
-        env.define("equals?", new BuiltIn(args -> {
+        env.defineBuiltIn("equals?", new BuiltIn(args -> {
             if (args.size() < 2) {
                 throw new RuntimeException("'equals?' requires at least 2 arguments");
             }
@@ -157,7 +198,7 @@ public class BuiltInLoader {
             return new BoolVal(true);
         }));
 
-        env.define("<", new BuiltIn(args -> {
+        env.defineBuiltIn("<", new BuiltIn(args -> {
             if (args.size() < 2) {
                 throw new RuntimeException("'<' requires at least 2 arguments");
             }
@@ -169,7 +210,7 @@ public class BuiltInLoader {
             return new BoolVal(true);
         }));
 
-        env.define("less-than?", new BuiltIn(args -> {
+        env.defineBuiltIn("less-than?", new BuiltIn(args -> {
             if (args.size() < 2) {
                 throw new RuntimeException("'<' requires at least 2 arguments");
             }
@@ -181,7 +222,7 @@ public class BuiltInLoader {
             return new BoolVal(true);
         }));
 
-        env.define(">", new BuiltIn(args -> {
+        env.defineBuiltIn(">", new BuiltIn(args -> {
             if (args.size() < 2) {
                 throw new RuntimeException("'>' requires at least 2 arguments");
             }
@@ -193,7 +234,7 @@ public class BuiltInLoader {
             return new BoolVal(true);
         }));
 
-        env.define("<=", new BuiltIn(args -> {
+        env.defineBuiltIn("<=", new BuiltIn(args -> {
             if (args.size() < 2) {
                 throw new RuntimeException("'<=' requires at least 2 arguments");
             }
@@ -205,7 +246,7 @@ public class BuiltInLoader {
             return new BoolVal(true);
         }));
 
-        env.define(">=", new BuiltIn(args -> {
+        env.defineBuiltIn(">=", new BuiltIn(args -> {
             if (args.size() < 2) {
                 throw new RuntimeException("'>=' requires at least 2 arguments");
             }
@@ -219,11 +260,44 @@ public class BuiltInLoader {
 
 
         // I/O
-        env.define("display", new BuiltIn(args -> {
+        env.defineBuiltIn("display", new BuiltIn(args -> {
             for (Value v : args) {
                 System.out.print(v);
             }
             return new BoolVal(true); // convention: return #t
+        }));
+
+        env.defineBuiltIn("isNull?", new BuiltIn(args -> {
+            if (args.size() != 1) {
+                throw new RuntimeException("'isNull?' requires exactly 1 argument");
+            }
+            if(args.get(0) instanceof StrVal)
+            {
+                return new BoolVal(true);
+            }
+           else if(args.get(0) instanceof NumVal)
+            {
+                return new BoolVal(true);
+            }
+            else if(args.get(0) instanceof NullVal)
+            {
+                return new BoolVal(true);
+            }
+            else if(args.get(0) instanceof VarVal)
+            {
+                String b = (args.get(0)).asString();
+                Value val = env.lookup(b);
+                if (val instanceof NullVal)
+                {
+                    return new BoolVal(true);
+                }
+                else {
+                    return new BoolVal(false);
+                }
+            }
+            else {
+                throw new RuntimeException("Invalid operand provided to isNull?");
+            }
         }));
     }
 }
