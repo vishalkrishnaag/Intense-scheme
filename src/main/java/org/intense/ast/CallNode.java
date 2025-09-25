@@ -22,19 +22,8 @@ public class CallNode extends ASTNode {
 
         if(operand instanceof AtomNode atom)
         {
-            Set<String> protectedSymbols = Set.of("make-instance!","make-copy!");
             // Lookup function in environment
             Value lookedUp = env.lookup(atom.getValue().asString());
-            if (lookedUp instanceof ReferenceValue reference) {
-                lookedUp = env.lookup(reference.getParent());
-            }
-
-            if(protectedSymbols.contains(atom.getValue().asString()))
-            {
-                if (lookedUp instanceof BuiltIn builtin) {
-                    return builtin.apply(solveBuiltInParams());
-                }
-            }
 
             // Handle built-in functions
             if (lookedUp instanceof BuiltIn builtin) {

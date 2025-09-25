@@ -3,8 +3,6 @@ package org.intense;
 import java.io.File
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import kotlin.io.nameWithoutExtension
-import kotlin.io.readText
 
     fun main(args: Array<String>) {
         val environment = Env(null)

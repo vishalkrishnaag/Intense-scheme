@@ -2,7 +2,7 @@ package org.intense;
 
 import org.intense.Types.*;
 
-import java.util.HashMap;
+import java.util.List;
 
 public class BuiltInLoader {
     public BuiltInLoader(Env env) {
@@ -15,7 +15,7 @@ public class BuiltInLoader {
             return new NumVal(sum);
         }));
 
-        env.defineBuiltIn("add?", new BuiltIn(args -> {
+        env.defineBuiltIn("addSymbol?", new BuiltIn(args -> {
             if (args.isEmpty()) {
                 throw new RuntimeException("'+' requires at least one argument");
             }
@@ -73,29 +73,30 @@ public class BuiltInLoader {
             return new NumVal(result);
         }));
 
-        env.defineBuiltIn("make-instance!", new BuiltIn(args -> {
-            String parent = (args.get(0)).asString(); // "a"
-            String child  = (args.get(1)).asString(); // "p"
+        env.defineBuiltIn("make-copy!", new BuiltIn(args -> {
+            String parent = (args.get(0)).asString(); // "p"
+            String child  = (args.get(1)).asString(); // "c"
 
             // copy root
-            env.define(child, env.lookup(parent));
-
-            // copy dotted children
-            for (var entry : env.getSymbol().entrySet()) {
-                String key = entry.getKey();
-                if (key.startsWith(parent + ".")) {
-                    String suffix = key.substring(parent.length()); // ".b" or ".c"
-                    env.define(child + suffix, entry.getValue());
-                }
-            }
-
+            int id = env.define(parent);
+            env.addSymbol(child,id);
             return new StrVal("#<done>");
         }));
 
-        env.defineBuiltIn("make-copy!", new BuiltIn(args -> {
-            String parent = (args.get(0)).asString();
-            String child  = (args.get(1)).asString();
-            env.define(child, new ReferenceValue(parent));
+        env.defineBuiltIn("make-instance!", new BuiltIn(args -> {
+            String parent = (args.get(0)).asString(); // "p"
+            String child  = (args.get(1)).asString(); // "c"
+            int parentId = env.getSymbolId(parent);
+            int childId = env.define(child);
+
+            env.getModuleManager().addMember(parentId,childId);
+            return new StrVal("#<done>");
+        }));
+
+        env.defineBuiltIn("list", new BuiltIn(args -> {
+            String listName = (args.getFirst()).asString();
+            List<Value> result = args.stream().skip(1).toList();
+            env.define(listName,new ListVal(result));
             return new StrVal("#<done>");
         }));
 

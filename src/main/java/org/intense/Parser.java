@@ -316,18 +316,18 @@ public class Parser {
             case NUMBER:
                 if (currentToken.getType() == TokenType.DOT) {
                     // symbol.value
-                    yield new AtomNode(new VarVal(parseChainedExpr(token.getValue())));
+                    yield new AtomNode(new VarVal(parseChainedExpr(token.getValue()),true));
                 }
                 yield new AtomNode(new NumVal(Double.parseDouble(token.getValue())));
             case STRING:
                 if (currentToken.getType() == TokenType.DOT) {
                     // symbol.value
-                    yield new AtomNode(new VarVal(parseChainedExpr(token.getValue())));
+                    yield new AtomNode(new VarVal(parseChainedExpr(token.getValue()),true));
                 }
                 yield new AtomNode(new StrVal(token.getValue()));
             case DOT:
                 //..symbol format
-                yield new AtomNode(new VarVal(parseChainedExpr(token.getValue())));
+                yield new AtomNode(new VarVal(parseChainedExpr(token.getValue()),true));
             case NULL:
                 yield new AtomNode(new NullVal());
             case SYMBOL:
@@ -342,12 +342,12 @@ public class Parser {
                     yield new ListAccessNode(token.getValue(), new DataListNode(elements));
                 } else if (currentToken.getType() == TokenType.DOT) {
                     // symbol.value
-                    yield new AtomNode(new VarVal(parseChainedExpr(token.getValue())));
+                    yield new AtomNode(new VarVal(parseChainedExpr(token.getValue()),true));
                 } else if (currentToken.getType() == TokenType.LESS_THAN) {
                     yield new CustomDataTypeNode(token.getValue(), parseDataTypes());
                 }
 
-                yield new AtomNode(new VarVal(token.getValue()));
+                yield new AtomNode(new VarVal(token.getValue(),false));
             case BOOLEAN:
                 yield new AtomNode(new BoolVal(token.getValue().equals("true")));
             default:
@@ -379,7 +379,7 @@ public class Parser {
         return switch (currentToken.getType()) {
             case NUMBER -> new AtomNode(new NumVal(Double.parseDouble(currentToken.getValue())));
             case STRING -> new AtomNode(new StrVal(currentToken.getValue()));
-            case SYMBOL -> new AtomNode(new VarVal(currentToken.getValue()));
+            case SYMBOL -> new AtomNode(new VarVal(currentToken.getValue(),false));
             case NULL -> new AtomNode(new NullVal());
             case BOOLEAN -> new AtomNode(new BoolVal(currentToken.getValue().equals("true")));
             default -> throw new RuntimeException("Unexpected token: " + currentToken);

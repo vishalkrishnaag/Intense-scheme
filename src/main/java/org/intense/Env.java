@@ -10,45 +10,87 @@ import java.util.Map;
 
 public class Env {
     private final Env parent;
-    private final Map<String, Value> symbols = new HashMap<>();
+    public HashMap<String, Integer> SymbolTable = new HashMap<>();
+    private static final ArrayList<Value> values = new ArrayList<>();
+
+    public InheritanceManager getModuleManager() {
+        return inheritanceManager;
+    }
+
+    public void setModuleManager(InheritanceManager inheritanceManager) {
+        this.inheritanceManager = inheritanceManager;
+    }
+
+    private InheritanceManager inheritanceManager;
+    private static int globalCounter = 0;
     private final Map<String, Value> builtIns = new HashMap<>();
+
 
     public Env() {
         this.parent = null;
     }
 
     public Env(Env parent) {
+        this.inheritanceManager = new InheritanceManager();
         this.parent = parent;
     }
 
     // Define a new variable in *this* scope
-    public void define(String name, Value value) {
-        symbols.put(name, value);
+    public int define(String name, Value val) {
+        if (SymbolTable.containsKey(name)) {
+            throw new IllegalArgumentException("Symbol already exists in this scope: " + name);
+        }
+        int id = globalCounter++;
+        SymbolTable.put(name, id);
+
+        // grow array if needed
+        if (id >= values.size()) {
+            values.add(val);
+        } else {
+            values.set(id, val);
+        }
+        return id;
     }
+
+    // Define a new variable in *this* scope
+    public int getSymbolId(String name) {
+        return SymbolTable.get(name);
+    }
+
+    public void addSymbol(String name, int id) {
+        if (SymbolTable.containsKey(name)) {
+            throw new IllegalArgumentException("Symbol already exists in this scope: " + name);
+        }
+        SymbolTable.put(name, id);
+    }
+
+
+    // Edit an existing symbol in this scope
+    public void edit(String name, Value val) {
+        Integer id = SymbolTable.get(name);
+        if (id != null) {
+            values.set(id, val);
+        } else if (parent != null) {
+            // optionally edit in parent scope
+            parent.edit(name, val);
+        } else {
+            throw new IllegalArgumentException("Symbol not found: " + name);
+        }
+    }
+
 
     // Lookup variable (searches up the parent chain)
     public Value lookup(String name) {
-        if (symbols.containsKey(name)) {
-            return symbols.get(name);
-        } else if (parent != null) {
-            return parent.lookup(name);
-        } else {
-            int dotIndex = name.indexOf(".");
-            String root = dotIndex == -1 ? name : name.substring(0, dotIndex);
-            String remainder = dotIndex == -1 ? "" : name.substring(dotIndex);
+        Integer id = SymbolTable.get(name);
+        if (id != null) return values.get(id);
+        if (parent != null) return parent.lookup(name);
+        return lookupBuiltIn(name);
+    }
 
-            if(dotIndex!=-1)
-            {
-                Value val = this.lookup(root);
-                if (val instanceof ReferenceValue ref) {
-                    // replace alias with parent name
-                    root = ref.getParent();
-                    name = root + remainder;
-                   return this.lookup(name);
-                }
-            }
-            return lookupBuiltIn(name);
-        }
+    // Direct lookup by ID (fastest path)
+    public Value lookupById(int id) {
+        if (id >= 0 && id < values.size()) return values.get(id);
+        return null;
     }
 
     // Lookup variable (searches up the parent chain)
@@ -58,7 +100,7 @@ public class Env {
         } else if (parent != null) {
             return parent.lookupBuiltIn(name);
         } else {
-            // can be a native func ,eg (a.add? 4)
+            // can be a native func ,eg (a.addSymbol? 4)
             int dotIndex = name.indexOf('.');
             List<String> parts = new ArrayList<>();
             if (dotIndex != -1) {
@@ -69,8 +111,9 @@ public class Env {
             }
             if(builtIns.containsKey(parts.getLast()))
             {
-                AtomNode atom = new AtomNode(new VarVal(parts.getFirst()));
+                AtomNode atom = new AtomNode(new VarVal(parts.getFirst(),false));
                 Value val = atom.eval(this);
+
                 return new PairFn(val, (BuiltIn) builtIns.get(parts.getLast()));
             }
             return new NullVal();
@@ -79,21 +122,28 @@ public class Env {
     public void defineBuiltIn(String key,Value value){
         this.builtIns.put(key,value);
     }
-    public Map<String,Value> getSymbol(){
-       return new HashMap<>(this.symbols);
-    }
+
     public Map<String,Value> getBuiltIns(){
         return new HashMap<>(this.builtIns);
     }
 
-    // Set existing variable (mutates closest scope where it's defined)
-    public void set(String name, Value value) {
-        if (symbols.containsKey(name)) {
-            symbols.put(name, value);
-        } else if (parent != null) {
-            parent.set(name, value);
-        } else {
-            throw new RuntimeException("Undefined symbol: " + name);
+    // Remove a symbol from this scope
+    public void remove(String name) {
+        Integer id = SymbolTable.remove(name);
+        if (id != null) values.set(id, null); // mark as deleted
+    }
+
+    public int define(String name) {
+        if (SymbolTable.containsKey(name)) {
+            throw new IllegalArgumentException("Symbol already exists in this scope: " + name);
         }
+        int id = globalCounter++;
+        SymbolTable.put(name, id);
+        if (id >= values.size()) {
+            values.add(null);
+        } else {
+            values.set(id, null);
+        }
+        return id;
     }
 }

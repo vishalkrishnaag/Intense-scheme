@@ -5,6 +5,7 @@ public class PairFn extends Value{
     private BuiltIn second;
 
     public PairFn(Value key, BuiltIn value) {
+        // (a.addSymbol? b) format
         this.first = key;
         this.second = value;
     }

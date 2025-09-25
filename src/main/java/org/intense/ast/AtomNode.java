@@ -3,11 +3,14 @@ package org.intense.ast;
 import org.intense.Env;
 import org.intense.Types.*;
 
+import java.util.List;
+
 public class AtomNode extends ASTNode {
     public Value getValue() {
         return value;
     }
-    public void setValue(Value valueProvided){
+
+    public void setValue(Value valueProvided) {
         this.value = valueProvided;
     }
 
@@ -21,24 +24,16 @@ public class AtomNode extends ASTNode {
     @Override
     public Value eval(Env env) {
         System.out.println("Evaluating AtomNode: " + value);
-
-        // If it's an identifier (symbol), look it up
-        if (value instanceof VarVal idVal) {
-            Value resolved = env.lookup(idVal.value);
-            if (resolved == null) {
-                throw new RuntimeException("Undefined identifier: " + idVal.value);
+            // If it's an identifier (symbol), look it up
+            if (value instanceof VarVal idVal) {
+                Value resolved = env.lookup(idVal.value);
+                if (resolved == null) {
+                    throw new RuntimeException("Undefined identifier: " + idVal.value);
+                }
+                return resolved;
             }
-            else if (resolved instanceof ReferenceValue reference) {
-                return env.lookup(reference.getParent());
-            }
-
-            return resolved;
-        } else if (value instanceof FnVal fnVal) {
-            return fnVal;
-        }
-
-        // Otherwise, it's already a literal (NumVal, StrVal, etc.)
-        return value;
+            // Otherwise, it's already a literal (NumVal, StrVal, etc.)
+            return value;
     }
 
     @Override
