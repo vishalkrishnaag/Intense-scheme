@@ -180,7 +180,13 @@ public class Lexer {
 //                case '?': advance(); return new Token(TokenType.NULLABLE, "?", startLine, startCol);
 //                case '<': advance(); return new Token(TokenType.LESS_THAN, "<", startLine, startCol);
 //                case '>': advance(); return new Token(TokenType.GREATER_THAN, ">", startLine, startCol);
-                case '.': advance(); return new Token(TokenType.DOT, ".", startLine, startCol);
+                case '.': {advance();
+                    if(currentChar == '.')
+                    {
+                        advance();
+                       return new Token(TokenType.DOUBLE_DOT,"..",startLine,startCol);
+                    }
+                    return new Token(TokenType.DOT, ".", startLine, startCol);}
                 case '"': return readString();
                 case '+': case '-':
                     if (position + 1 < input.length() && Character.isDigit(input.charAt(position + 1))) {

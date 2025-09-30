@@ -2,7 +2,12 @@ package org.intense;
 
 import org.intense.Types.*;
 
-import java.util.List;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.Map;
+import java.util.Queue;
+import java.util.Stack;
 
 public class BuiltInLoader {
     public BuiltInLoader(Env env) {
@@ -15,7 +20,7 @@ public class BuiltInLoader {
             return new NumVal(sum);
         }));
 
-        env.defineBuiltIn("addSymbol?", new BuiltIn(args -> {
+        env.defineBuiltIn("add?", new BuiltIn(args -> {
             if (args.isEmpty()) {
                 throw new RuntimeException("'+' requires at least one argument");
             }
@@ -73,32 +78,226 @@ public class BuiltInLoader {
             return new NumVal(result);
         }));
 
-        env.defineBuiltIn("make-copy!", new BuiltIn(args -> {
+        env.defineBuiltIn("make-instance", new BuiltIn(args -> {
             String parent = (args.get(0)).asString(); // "p"
             String child  = (args.get(1)).asString(); // "c"
 
             // copy root
-            int id = env.define(parent);
-            env.addSymbol(child,id);
+            int childId = env.getSymbolId(parent);
+            env.addSymbol(parent,childId);
+
+            // copy dotted children
+            for (var entry : env.getSymbol().entrySet()) {
+                String key = entry.getKey();
+                if (key.startsWith(parent + ".")) {
+                    String suffix = key.substring(parent.length()); // ".b" or ".c"
+                    env.addSymbol(child + suffix,entry.getValue());
+                }
+            }
+
             return new StrVal("#<done>");
         }));
 
-        env.defineBuiltIn("make-instance!", new BuiltIn(args -> {
+        env.defineBuiltIn("make-copy!", new BuiltIn(args -> {
             String parent = (args.get(0)).asString(); // "p"
-            String child  = (args.get(1)).asString(); // "c"
-            int parentId = env.getSymbolId(parent);
-            int childId = env.define(child);
-
-            env.getModuleManager().addMember(parentId,childId);
-            return new StrVal("#<done>");
+            return new ReferenceValue(parent);
         }));
 
-        env.defineBuiltIn("list", new BuiltIn(args -> {
-            String listName = (args.getFirst()).asString();
-            List<Value> result = args.stream().skip(1).toList();
-            env.define(listName,new ListVal(result));
-            return new StrVal("#<done>");
+        env.defineBuiltIn("list", new BuiltIn(ListVal::new));
+        env.defineBuiltIn("list.add",new BuiltIn(args ->{
+            Value list_provided = args.get(0);
+            if(list_provided instanceof ListVal list)
+            {
+                list.value.add(args.get(1));
+                return  list;
+            }
+            throw new RuntimeException(list_provided+" must be a list to perform list.add");
+
         }));
+
+        env.defineBuiltIn("list.remove",new BuiltIn(args ->{
+            Value list_provided = args.get(0);
+            if(list_provided instanceof ListVal list)
+            {
+                list.value.remove((int) args.get(1).asNumber());
+                return  list;
+            }
+            throw new RuntimeException(list_provided+" must be a list to perform list.remove");
+
+        }));
+
+        env.defineBuiltIn("list.get",new BuiltIn(args ->{
+            Value list_provided = args.get(0);
+            if(list_provided instanceof ListVal list)
+            {
+               return list.value.get((int) args.get(1).asNumber());
+            }
+            throw new RuntimeException(list_provided+" must be a list to perform list.get");
+
+        }));
+
+        env.defineBuiltIn("list.size",new BuiltIn(args ->{
+            Value list_provided = args.get(0);
+            if(list_provided instanceof ListVal list)
+            {
+                return new NumVal((double) list.value.size());
+            }
+            throw new RuntimeException(list_provided+" must be a list to perform list.get");
+
+        }));
+
+        env.defineBuiltIn("stack", new BuiltIn(args -> {
+            Stack<Value> stack = new Stack<Value>();
+            args.forEach(stack::push);
+            return new StackVal(stack);
+        }));
+        env.defineBuiltIn("stack.push",new BuiltIn(args ->{
+            Value list_provided = args.get(0);
+            if(list_provided instanceof StackVal stack)
+            {
+                stack.value.push(args.get(1));
+                return  stack;
+            }
+            throw new RuntimeException(list_provided+" must be a stack to perform stack.push");
+
+        }));
+
+        env.defineBuiltIn("stack.pop",new BuiltIn(args ->{
+            Value list_provided = args.get(0);
+            if(list_provided instanceof StackVal stack)
+            {
+                stack.value.pop();
+                return  stack;
+            }
+            throw new RuntimeException(list_provided+" must be a stack to perform stack.pop");
+
+        }));
+
+        env.defineBuiltIn("stack.get",new BuiltIn(args ->{
+            Value list_provided = args.get(0);
+            if(list_provided instanceof StackVal stack)
+            {
+                return stack.value.get((int) args.get(1).asNumber());
+            }
+            throw new RuntimeException(list_provided+" must be a stack to perform stack.get");
+
+        }));
+
+        env.defineBuiltIn("stack.size",new BuiltIn(args ->{
+            Value list_provided = args.get(0);
+            if(list_provided instanceof StackVal stack)
+            {
+                return new NumVal((double) stack.value.size());
+            }
+            throw new RuntimeException(list_provided+" must be a list to perform list.get");
+
+        }));
+
+
+
+        env.defineBuiltIn("queue", new BuiltIn(args -> {
+            Queue<Value> queue = null;
+            try {
+                queue.addAll(args);
+            } catch (NullPointerException n)
+            {
+                System.out.println("Operation queue creation failed");
+            }
+
+            return new QueueVal(queue);
+        }));
+        env.defineBuiltIn("queue.enqueue",new BuiltIn(args ->{
+            Value list_provided = args.get(0);
+            if(list_provided instanceof QueueVal queue)
+            {
+                queue.value.add(args.get(1));
+                return  queue;
+            }
+            throw new RuntimeException(list_provided+" must be a queue to perform queue.push");
+
+        }));
+
+        env.defineBuiltIn("queue.deque",new BuiltIn(args ->{
+            Value list_provided = args.get(0);
+            if(list_provided instanceof QueueVal queue)
+            {
+                queue.value.remove();
+                return  queue;
+            }
+            throw new RuntimeException(list_provided+" must be a queue to perform queue.pop");
+
+        }));
+
+        env.defineBuiltIn("queue.peek",new BuiltIn(args ->{
+            Value list_provided = args.get(0);
+            if(list_provided instanceof QueueVal queue)
+            {
+                return queue.value.peek();
+            }
+            throw new RuntimeException(list_provided+" must be a queue to perform queue.peek");
+
+        }));
+
+        env.defineBuiltIn("queue.size",new BuiltIn(args ->{
+            Value list_provided = args.get(0);
+            if(list_provided instanceof QueueVal q)
+            {
+                return new NumVal((double) q.value.size());
+            }
+            throw new RuntimeException(list_provided+" must be a list to perform list.get");
+
+        }));
+
+
+
+        env.defineBuiltIn("map", new BuiltIn(args -> {
+                  MapVal map = (MapVal) args.getFirst();
+                   return new MapVal(map.value);
+        }));
+
+        env.defineBuiltIn("map.put",new BuiltIn(args ->{
+            Value list_provided = args.get(0);
+            if(list_provided instanceof MapVal map)
+            {
+                MapVal mapVal = (MapVal) args.get(1);
+                map.value.putAll(mapVal.value);
+                return map;
+            }
+            throw new RuntimeException(list_provided+" must be a map to perform map.put");
+        }));
+
+        env.defineBuiltIn("map.remove",new BuiltIn(args ->{
+            Value list_provided = args.get(0);
+            if(list_provided instanceof MapVal map)
+            {
+                map.value.remove((int) args.get(1).asNumber());
+                return  map;
+            }
+            throw new RuntimeException(list_provided+" must be a list to perform list.remove");
+
+        }));
+
+        env.defineBuiltIn("map.get",new BuiltIn(args ->{
+            Value list_provided = args.get(0);
+            if(list_provided instanceof MapVal map)
+            {
+                return map.value.get((int) args.get(1).asNumber());
+            }
+
+            throw new RuntimeException(list_provided+" must be a list to perform list.get");
+
+        }));
+
+        env.defineBuiltIn("map.size",new BuiltIn(args ->{
+            Value list_provided = args.get(0);
+            if(list_provided instanceof MapVal map)
+            {
+                return new NumVal((double) map.value.size());
+            }
+            throw new RuntimeException(list_provided+" must be a list to perform list.get");
+
+        }));
+
 
 
         env.defineBuiltIn("*", new BuiltIn(args -> {
@@ -266,6 +465,138 @@ public class BuiltInLoader {
                 System.out.print(v);
             }
             return new BoolVal(true); // convention: return #t
+        }));
+
+        // [COND]
+        env.defineBuiltIn("cond", new BuiltIn(args -> {
+            Value output = null;
+            for (Value v : args) {
+                output = v;
+            }
+            return output; // convention: return #t
+        }));
+
+        env.defineBuiltIn("ls", new BuiltIn(args -> {
+            ProcessBuilder pb = new ProcessBuilder("ls");
+            if (System.getProperty("os.name").toLowerCase().contains("win")) {
+                // Run built-in commands via cmd.exe
+                pb = new ProcessBuilder("cmd.exe", "/c","dir");
+            } else {
+                // Linux/macOS: split by spaces
+                pb = new ProcessBuilder("ls");
+            }
+            pb.redirectErrorStream(true); // Merge stdout and stderr
+
+            try {
+                Process process = pb.start();
+                BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    System.out.println(line);
+                }
+
+                return new StrVal(line);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }));
+
+        env.defineBuiltIn("dir", new BuiltIn(args -> {
+            ProcessBuilder pb;
+            BufferedReader reader = null;
+            // Check if OS is Windows
+            if (System.getProperty("os.name").toLowerCase().contains("win")) {
+                // Run built-in commands via cmd.exe
+                pb = new ProcessBuilder("cmd.exe", "/c","dir");
+
+            } else {
+                // Linux/macOS: split by spaces
+                pb = new ProcessBuilder("ls");
+            }
+            try {
+                reader = new BufferedReader(new InputStreamReader(pb.start().getInputStream()));
+                pb.redirectErrorStream(true); // Merge stdout and stderr
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    System.out.println(line);
+                }
+                return new StrVal(line);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }));
+
+        env.defineBuiltIn("cd", new BuiltIn(args -> {
+            ProcessBuilder pb;
+            BufferedReader reader = null;
+            if (System.getProperty("os.name").toLowerCase().contains("win")) {
+                // Run built-in commands via cmd.exe
+                pb = new ProcessBuilder("cmd.exe", "/c","cd");
+
+            } else {
+                // Linux/macOS: split by spaces
+                pb = new ProcessBuilder("cd");
+            }
+            try {
+                reader = new BufferedReader(new InputStreamReader(pb.start().getInputStream()));
+                pb.redirectErrorStream(true); // Merge stdout and stderr
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    System.out.println(line);
+                }
+                return new StrVal(line);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }));
+
+        env.defineBuiltIn("cd", new BuiltIn(args -> {
+            ProcessBuilder pb;
+            BufferedReader reader = null;
+            if (System.getProperty("os.name").toLowerCase().contains("win")) {
+                // Run built-in commands via cmd.exe
+                pb = new ProcessBuilder("cmd.exe", "/c","cd");
+
+            } else {
+                // Linux/macOS: split by spaces
+                pb = new ProcessBuilder("cd");
+            }
+            try {
+                reader = new BufferedReader(new InputStreamReader(pb.start().getInputStream()));
+                pb.redirectErrorStream(true); // Merge stdout and stderr
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    System.out.println(line);
+                }
+                return new StrVal(line);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }));
+
+
+        env.defineBuiltIn("cd ..", new BuiltIn(args -> {
+            ProcessBuilder pb;
+            BufferedReader reader = null;
+            if (System.getProperty("os.name").toLowerCase().contains("win")) {
+                // Run built-in commands via cmd.exe
+                pb = new ProcessBuilder("cmd.exe", "/c","cd ..");
+
+            } else {
+                // Linux/macOS: split by spaces
+                pb = new ProcessBuilder("cd ..");
+            }
+            try {
+                reader = new BufferedReader(new InputStreamReader(pb.start().getInputStream()));
+                pb.redirectErrorStream(true); // Merge stdout and stderr
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    System.out.println(line);
+                }
+                return new StrVal(line);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }));
 
         env.defineBuiltIn("isNull?", new BuiltIn(args -> {

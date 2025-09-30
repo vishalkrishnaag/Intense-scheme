@@ -30,8 +30,7 @@ public class CallNode extends ASTNode {
                 return builtin.apply(evalBuiltInParams(env));
             }
             if (lookedUp instanceof FnVal fn) {
-                Value[] evaluatedArgs = evalParams(env);
-                return fn.apply(evaluatedArgs,env);
+                return fn.apply(evalParams(env),env);
             }
 
             if (lookedUp instanceof PairFn pair) {
@@ -46,9 +45,14 @@ public class CallNode extends ASTNode {
         }
     }
 
-    private Value[] evalParams(Env env) {
-        if (params == null) return new Value[]{};
-        return params.stream().map(p -> p.eval(env)).toArray(Value[]::new);
+    private ArrayList<Value> evalParams(Env env) {
+        ArrayList<Value> evaluatedParams = new ArrayList<>();
+        if (params != null && !params.isEmpty()) {
+            for (ASTNode p : params) {
+                evaluatedParams.add(p.eval(env));
+            }
+        }
+        return evaluatedParams;
     }
 
     private ArrayList<Value> evalWithLeftParams(Env env, Value left) {

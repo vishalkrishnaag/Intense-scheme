@@ -22,7 +22,17 @@ public final class ProtectBuiltIn {
             "equals?",
             "not-equals?",
             "not-of",
-            "make-instance!");
+            "cond",
+            "if",
+            "else",
+            "make-instance!",
+            "list",
+            "list.add",
+            "list.remove",
+            "list.get",
+            "list.size",
+            "map",
+            "map.put");
 
     public ProtectBuiltIn(String name) {
         System.out.println("verified ....");

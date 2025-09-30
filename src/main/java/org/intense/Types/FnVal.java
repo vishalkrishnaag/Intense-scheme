@@ -2,6 +2,8 @@ package org.intense.Types;
 
 import org.intense.Env;
 
+import java.util.List;
+
 public abstract class FnVal extends Value{
     public String getFunctionName() {
         return functionName;
@@ -16,5 +18,5 @@ public abstract class FnVal extends Value{
         return 0;
     }
 
-    public abstract Value apply(Value[] args, Env env);
+    public abstract Value apply(List<Value> args, Env env);
 }

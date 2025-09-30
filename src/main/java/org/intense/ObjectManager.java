@@ -1,14 +1,12 @@
 package org.intense;
 
-import org.intense.Types.NullVal;
-import org.intense.Types.Pair;
 import org.intense.Types.Value;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-public class InheritanceManager {
+public class ObjectManager {
 
     // Maps class/object ID -> list of member IDs
     private final HashMap<Integer, List<Integer>> Members = new HashMap<>();

@@ -13,15 +13,15 @@ public class Env {
     public HashMap<String, Integer> SymbolTable = new HashMap<>();
     private static final ArrayList<Value> values = new ArrayList<>();
 
-    public InheritanceManager getModuleManager() {
+    public ObjectManager getModuleManager() {
         return inheritanceManager;
     }
 
-    public void setModuleManager(InheritanceManager inheritanceManager) {
+    public void setModuleManager(ObjectManager inheritanceManager) {
         this.inheritanceManager = inheritanceManager;
     }
 
-    private InheritanceManager inheritanceManager;
+    private ObjectManager inheritanceManager;
     private static int globalCounter = 0;
     private final Map<String, Value> builtIns = new HashMap<>();
 
@@ -31,12 +31,12 @@ public class Env {
     }
 
     public Env(Env parent) {
-        this.inheritanceManager = new InheritanceManager();
+        this.inheritanceManager = new ObjectManager();
         this.parent = parent;
     }
 
     // Define a new variable in *this* scope
-    public int define(String name, Value val) {
+    public void define(String name, Value val) {
         if (SymbolTable.containsKey(name)) {
             throw new IllegalArgumentException("Symbol already exists in this scope: " + name);
         }
@@ -49,12 +49,49 @@ public class Env {
         } else {
             values.set(id, val);
         }
-        return id;
+    }
+
+    // set assignment variable in *this* scope
+    public void set(String name, Value val) {
+        if (!SymbolTable.containsKey(name)) {
+            throw new IllegalArgumentException("Symbol does not in this scope: " + name);
+        }
+        int id = globalCounter++;
+        SymbolTable.put(name, id);
+
+        // grow array if needed
+        if (id >= values.size()) {
+            values.add(val);
+        } else {
+            values.set(id, val);
+        }
+    }
+
+    // Define a new variable in *this* scope
+    public void defineSymbol(String name, Value val) {
+        if (SymbolTable.containsKey(name)) {
+            throw new IllegalArgumentException("Symbol already exists in this scope: " + name);
+        }
+        int id = globalCounter++;
+        SymbolTable.put(name, id);
+
+        // grow array if needed
+        if (id >= values.size()) {
+            values.add(val);
+        } else {
+            values.set(id, val);
+        }
     }
 
     // Define a new variable in *this* scope
     public int getSymbolId(String name) {
         return SymbolTable.get(name);
+    }
+    public List<Value> getAllDataPresent() {
+        return values;
+    }
+    public  Map<String,Integer> getSymbol(){
+        return this.SymbolTable;
     }
 
     public void addSymbol(String name, int id) {
@@ -84,6 +121,20 @@ public class Env {
         Integer id = SymbolTable.get(name);
         if (id != null) return values.get(id);
         if (parent != null) return parent.lookup(name);
+        int dotIndex = name.indexOf(".");
+        String root = dotIndex == -1 ? name : name.substring(0, dotIndex);
+        String remainder = dotIndex == -1 ? "" : name.substring(dotIndex);
+
+        if(dotIndex!=-1)
+        {
+            Value val = this.lookup(root);
+            if (val instanceof ReferenceValue ref) {
+                // replace alias with parent name
+                root = ref.getParent();
+                name = root + remainder;
+                return this.lookup(name);
+            }
+        }
         return lookupBuiltIn(name);
     }
 

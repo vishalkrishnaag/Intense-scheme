@@ -30,6 +30,9 @@ public class AtomNode extends ASTNode {
                 if (resolved == null) {
                     throw new RuntimeException("Undefined identifier: " + idVal.value);
                 }
+                else if (resolved instanceof ReferenceValue reference) {
+                    return env.lookup(reference.getParent());
+                }
                 return resolved;
             }
             // Otherwise, it's already a literal (NumVal, StrVal, etc.)

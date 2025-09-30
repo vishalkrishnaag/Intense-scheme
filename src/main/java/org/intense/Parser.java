@@ -29,6 +29,9 @@ public class Parser {
         if (currentToken.getType() == TokenType.LPAREN) {
             advance();
             return this.parseListExpr();
+        }else if (currentToken.getType() == TokenType.LBRACE) {
+            advance();
+            return this.parseMapNode();
         }
          else {
            return parseAtom();
@@ -80,25 +83,48 @@ public class Parser {
                 consume(TokenType.RPAREN);
                 return whileConditionNode;
             }
-            case SET -> {
-                advance();
-                AtomNode first = parseIfAtom();
-                advance();
-                List<ASTNode> rest = new ArrayList<>();
-                while (currentToken.getType() != TokenType.RPAREN && currentToken.getType() != TokenType.EOF) {
-                    rest.add(parse());
-                }
-                if (rest.isEmpty()) {
-                    throw new RuntimeException("(Invalid syntax set assign assignee)");
-                }
-                consume(TokenType.RPAREN);
-                return new SetNode(first, new DataListNode(rest));
-            }
             case GET -> {
                 advance();
                 ASTNode first = parseAtom();
                 consume(TokenType.RPAREN);
                 return new GetNode(first);
+            }
+            case TokenType.SET -> {
+                advance(); // consume 'set!'
+
+                if (currentToken.getType() == TokenType.LPAREN) {
+                    // Function definition sugar: (define (f arg1 arg2 ...) body...)
+                    consume(TokenType.LPAREN);
+
+                    ASTNode name = parseAtom();              // function name
+                    List<String> arguments = parseParamList();  // parse args until R_PAREN
+                    consume(TokenType.RPAREN); // close param list
+
+                    // Parse body until closing R_PAREN
+                    List<ASTNode> body = parseBody();
+                    consume(TokenType.RPAREN); // close define
+                    // --- Desugar to (define f (lambda (args...) body...)) ---
+                    LambdaNode lambda = new LambdaNode(arguments, body);
+                    if(name instanceof AtomNode atom){
+                        return new SetNode(atom, lambda);
+                    }else {
+                        throw new RuntimeException("A define name should be an identifier");
+                    }
+                } else {
+                    // Variable definition: (define x expr)
+                    ASTNode name = parseAtom();
+                    ASTNode value = parse();
+
+                    consume(TokenType.RPAREN); // close define
+                    if(name instanceof AtomNode atomic)
+                    {
+                        return new SetNode(atomic, value); // variable node
+                    }
+                    else {
+                        throw new RuntimeException("A define name should be an identifier");
+                    }
+
+                }
             }
             case TokenType.DEF -> {
                 advance(); // consume 'define'
@@ -174,6 +200,7 @@ public class Parser {
 
             }
             case TokenType.LBRACE -> {
+                advance();
                 return parseMapNode();// eat `}`
             }
             case TokenType.RBRACE, TokenType.RPAREN, RLIST -> {
@@ -288,16 +315,15 @@ public class Parser {
 
 
     private ASTNode parseMapNode() {
-        consume(TokenType.LBRACE);
-        Map<ASTNode, ASTNode> keyMap = new HashMap<>();
+        ArrayList<Pair<ASTNode,ASTNode>> keyMap = new ArrayList<>();
         while (currentToken.getType() != TokenType.RBRACE && currentToken.getType() != TokenType.EOF) {
             if (currentToken.getType() == TokenType.COLON) {
                 advance();
                 AtomNode atomNode = parseIfAtom();
                 advance();
                 ASTNode data = parse();
-                if (atomNode.getValue() == null) throw new RuntimeException("Key or value is missing");
-                keyMap.put(atomNode, data);
+                if (atomNode.getValue() == null|| data ==null) throw new RuntimeException("Key or value is missing");
+                keyMap.add(new Pair<>(atomNode, data));
             } else {
                 throw new RuntimeException("a map must require a proper :key " + currentToken);
             }
@@ -331,8 +357,13 @@ public class Parser {
             case NULL:
                 yield new AtomNode(new NullVal());
             case SYMBOL:
+                if (currentToken.getType() == TokenType.DOUBLE_DOT)
+                {
+                    advance();
+                   yield new AtomNode(new StrVal(token.getValue()+" .."));
+                }
                 // symbol[key]
-                if (currentToken.getType() == TokenType.LLIST) {
+               else if (currentToken.getType() == TokenType.LLIST) {
                     advance();
                     List<ASTNode> elements = new ArrayList<>();
                     while (currentToken.getType() != TokenType.RLIST && currentToken.getType() != TokenType.EOF) {

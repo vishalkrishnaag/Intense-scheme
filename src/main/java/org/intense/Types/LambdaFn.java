@@ -3,6 +3,7 @@ package org.intense.Types;
 import org.intense.Env;
 import org.intense.ast.ASTNode;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class LambdaFn extends FnVal {
@@ -22,21 +23,21 @@ public class LambdaFn extends FnVal {
     }
 
     @Override
-    public Value apply(Value[] args, Env callerEnv) {
+    public Value apply(List<Value> args, Env callerEnv) {
 
-            if (args.length != params.size()) {
-                throw new RuntimeException("Expected " + params.size() + " args, got " + args.length);
+            if (args.size() != params.size()) {
+                throw new RuntimeException("Expected " + params.size() + " args, got " + args.size());
             }
             // new local env chained to closure
             Env localEnv = new Env(closure);
             for (int i = 0; i < params.size(); i++) {
-                localEnv.define(params.get(i), args[i]);
+                localEnv.define(params.get(i), args.get(i));
             }
             // Evaluate body in this new environment
             Value result = null;
             for (ASTNode stmt : body)
             {
-                result = stmt.eval(callerEnv);
+                result = stmt.eval(localEnv);
             }
             return result;
 
