@@ -10,6 +10,7 @@ public class ObjectManager {
 
     // Maps class/object ID -> list of member IDs
     private final HashMap<Integer, List<Integer>> Members = new HashMap<>();
+    private List<Value> fieldValues = new ArrayList<>();
 
     /**
      * Add a member to a class.

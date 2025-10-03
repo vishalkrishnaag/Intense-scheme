@@ -5,9 +5,9 @@ import org.intense.Types.*;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.Map;
-import java.util.Queue;
-import java.util.Stack;
+import java.util.*;
+
+import static java.lang.System.exit;
 
 public class BuiltInLoader {
     public BuiltInLoader(Env env) {
@@ -80,26 +80,15 @@ public class BuiltInLoader {
 
         env.defineBuiltIn("make-instance", new BuiltIn(args -> {
             String parent = (args.get(0)).asString(); // "p"
-            String child  = (args.get(1)).asString(); // "c"
-
-            // copy root
-            int childId = env.getSymbolId(parent);
-            env.addSymbol(parent,childId);
-
-            // copy dotted children
-            for (var entry : env.getSymbol().entrySet()) {
-                String key = entry.getKey();
-                if (key.startsWith(parent + ".")) {
-                    String suffix = key.substring(parent.length()); // ".b" or ".c"
-                    env.addSymbol(child + suffix,entry.getValue());
-                }
-            }
-
-            return new StrVal("#<done>");
+            int indent = env.getSymbolId(parent);
+            env.getModuleManager().addMember(env.getGlobalCounter()+1,indent);
+            return new InstanceValue(parent);
         }));
 
-        env.defineBuiltIn("make-copy!", new BuiltIn(args -> {
-            String parent = (args.get(0)).asString(); // "p"
+        env.defineBuiltIn("make-copy", new BuiltIn(args -> {
+            String parent = (args.getFirst()).asString(); // "p"
+            int childId = env.getSymbolId(parent);
+            env.addSymbol(parent,childId);
             return new ReferenceValue(parent);
         }));
 
@@ -597,6 +586,11 @@ public class BuiltInLoader {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
+        }));
+
+        env.define("exit",new BuiltIn(args->{
+            exit(0);
+            return null;
         }));
 
         env.defineBuiltIn("isNull?", new BuiltIn(args -> {

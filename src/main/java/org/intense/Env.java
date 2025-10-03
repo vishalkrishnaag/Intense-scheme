@@ -11,7 +11,7 @@ import java.util.Map;
 public class Env {
     private final Env parent;
     public HashMap<String, Integer> SymbolTable = new HashMap<>();
-    private static final ArrayList<Value> values = new ArrayList<>();
+    private final ArrayList<Value> values = new ArrayList<>();
 
     public ObjectManager getModuleManager() {
         return inheritanceManager;
@@ -37,9 +37,9 @@ public class Env {
 
     // Define a new variable in *this* scope
     public void define(String name, Value val) {
-        if (SymbolTable.containsKey(name)) {
-            throw new IllegalArgumentException("Symbol already exists in this scope: " + name);
-        }
+//        if (SymbolTable.containsKey(name)) {
+//            throw new IllegalArgumentException("Symbol already exists in this scope: " + name);
+//        }
         int id = globalCounter++;
         SymbolTable.put(name, id);
 
@@ -49,6 +49,12 @@ public class Env {
         } else {
             values.set(id, val);
         }
+    }
+
+
+
+    int getGlobalCounter(){
+        return globalCounter;
     }
 
     // set assignment variable in *this* scope

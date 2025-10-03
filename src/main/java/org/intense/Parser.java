@@ -29,12 +29,11 @@ public class Parser {
         if (currentToken.getType() == TokenType.LPAREN) {
             advance();
             return this.parseListExpr();
-        }else if (currentToken.getType() == TokenType.LBRACE) {
+        } else if (currentToken.getType() == TokenType.LBRACE) {
             advance();
             return this.parseMapNode();
-        }
-         else {
-           return parseAtom();
+        } else {
+            return parseAtom();
         }
     }
 
@@ -105,9 +104,9 @@ public class Parser {
                     consume(TokenType.RPAREN); // close define
                     // --- Desugar to (define f (lambda (args...) body...)) ---
                     LambdaNode lambda = new LambdaNode(arguments, body);
-                    if(name instanceof AtomNode atom){
+                    if (name instanceof AtomNode atom) {
                         return new SetNode(atom, lambda);
-                    }else {
+                    } else {
                         throw new RuntimeException("A define name should be an identifier");
                     }
                 } else {
@@ -116,11 +115,9 @@ public class Parser {
                     ASTNode value = parse();
 
                     consume(TokenType.RPAREN); // close define
-                    if(name instanceof AtomNode atomic)
-                    {
+                    if (name instanceof AtomNode atomic) {
                         return new SetNode(atomic, value); // variable node
-                    }
-                    else {
+                    } else {
                         throw new RuntimeException("A define name should be an identifier");
                     }
 
@@ -142,9 +139,9 @@ public class Parser {
                     consume(TokenType.RPAREN); // close define
                     // --- Desugar to (define f (lambda (args...) body...)) ---
                     LambdaNode lambda = new LambdaNode(arguments, body);
-                    if(name instanceof AtomNode atom){
+                    if (name instanceof AtomNode atom) {
                         return new DefNode(atom, lambda);
-                    }else {
+                    } else {
                         throw new RuntimeException("A define name should be an identifier");
                     }
                 } else {
@@ -153,11 +150,9 @@ public class Parser {
                     ASTNode value = parse();
 
                     consume(TokenType.RPAREN); // close define
-                    if(name instanceof AtomNode atomic)
-                    {
+                    if (name instanceof AtomNode atomic) {
                         return new DefNode(atomic, value); // variable node
-                    }
-                    else {
+                    } else {
                         throw new RuntimeException("A define name should be an identifier");
                     }
 
@@ -204,7 +199,8 @@ public class Parser {
                 return parseMapNode();// eat `}`
             }
             case TokenType.RBRACE, TokenType.RPAREN, RLIST -> {
-                throw new RuntimeException("unexpected closing ) or } or ] , got " + currentToken);
+                advance();
+                return new AtomNode(new NullVal());
             }
             case TokenType.IS -> {
                 advance();
@@ -251,8 +247,7 @@ public class Parser {
                 ASTNode astNode = parseAtom();
                 if (astNode instanceof AtomNode atom) {
                     params.add(atom.getValue().asString());
-                }
-                else {
+                } else {
                     throw new RuntimeException("A function parameter name should be an identifier");
                 }
             } else {
@@ -315,14 +310,14 @@ public class Parser {
 
 
     private ASTNode parseMapNode() {
-        ArrayList<Pair<ASTNode,ASTNode>> keyMap = new ArrayList<>();
+        ArrayList<Pair<ASTNode, ASTNode>> keyMap = new ArrayList<>();
         while (currentToken.getType() != TokenType.RBRACE && currentToken.getType() != TokenType.EOF) {
             if (currentToken.getType() == TokenType.COLON) {
                 advance();
                 AtomNode atomNode = parseIfAtom();
                 advance();
                 ASTNode data = parse();
-                if (atomNode.getValue() == null|| data ==null) throw new RuntimeException("Key or value is missing");
+                if (atomNode.getValue() == null || data == null) throw new RuntimeException("Key or value is missing");
                 keyMap.add(new Pair<>(atomNode, data));
             } else {
                 throw new RuntimeException("a map must require a proper :key " + currentToken);
@@ -342,28 +337,32 @@ public class Parser {
             case NUMBER:
                 if (currentToken.getType() == TokenType.DOT) {
                     // symbol.value
-                    yield new AtomNode(new VarVal(parseChainedExpr(token.getValue()),true));
+                    yield new AtomNode(new VarVal(parseChainedExpr(token.getValue()), true));
                 }
                 yield new AtomNode(new NumVal(Double.parseDouble(token.getValue())));
             case STRING:
                 if (currentToken.getType() == TokenType.DOT) {
                     // symbol.value
-                    yield new AtomNode(new VarVal(parseChainedExpr(token.getValue()),true));
+                    yield new AtomNode(new VarVal(parseChainedExpr(token.getValue()), true));
                 }
                 yield new AtomNode(new StrVal(token.getValue()));
             case DOT:
                 //..symbol format
-                yield new AtomNode(new VarVal(parseChainedExpr(token.getValue()),true));
+                yield new AtomNode(new VarVal(parseChainedExpr(token.getValue()), true));
             case NULL:
                 yield new AtomNode(new NullVal());
+            case RBRACE:
+            case RPAREN:
+            case RLIST: {
+                yield new AtomNode(new NullVal());
+            }
             case SYMBOL:
-                if (currentToken.getType() == TokenType.DOUBLE_DOT)
-                {
+                if (currentToken.getType() == TokenType.DOUBLE_DOT) {
                     advance();
-                   yield new AtomNode(new StrVal(token.getValue()+" .."));
+                    yield new AtomNode(new StrVal(token.getValue() + " .."));
                 }
                 // symbol[key]
-               else if (currentToken.getType() == TokenType.LLIST) {
+                else if (currentToken.getType() == TokenType.LLIST) {
                     advance();
                     List<ASTNode> elements = new ArrayList<>();
                     while (currentToken.getType() != TokenType.RLIST && currentToken.getType() != TokenType.EOF) {
@@ -373,12 +372,12 @@ public class Parser {
                     yield new ListAccessNode(token.getValue(), new DataListNode(elements));
                 } else if (currentToken.getType() == TokenType.DOT) {
                     // symbol.value
-                    yield new AtomNode(new VarVal(parseChainedExpr(token.getValue()),true));
+                    yield new AtomNode(new VarVal(parseChainedExpr(token.getValue()), true));
                 } else if (currentToken.getType() == TokenType.LESS_THAN) {
                     yield new CustomDataTypeNode(token.getValue(), parseDataTypes());
                 }
 
-                yield new AtomNode(new VarVal(token.getValue(),false));
+                yield new AtomNode(new VarVal(token.getValue(), false));
             case BOOLEAN:
                 yield new AtomNode(new BoolVal(token.getValue().equals("true")));
             default:
@@ -410,7 +409,7 @@ public class Parser {
         return switch (currentToken.getType()) {
             case NUMBER -> new AtomNode(new NumVal(Double.parseDouble(currentToken.getValue())));
             case STRING -> new AtomNode(new StrVal(currentToken.getValue()));
-            case SYMBOL -> new AtomNode(new VarVal(currentToken.getValue(),false));
+            case SYMBOL -> new AtomNode(new VarVal(currentToken.getValue(), false));
             case NULL -> new AtomNode(new NullVal());
             case BOOLEAN -> new AtomNode(new BoolVal(currentToken.getValue().equals("true")));
             default -> throw new RuntimeException("Unexpected token: " + currentToken);

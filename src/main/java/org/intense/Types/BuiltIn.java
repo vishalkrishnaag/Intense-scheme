@@ -18,4 +18,8 @@ public class BuiltIn extends Value {
     public String toString() {
         return "<BuiltIn>";
     }
+
+    public Function<List<Value>, Value> getImpl() {
+        return impl;
+    }
 }
